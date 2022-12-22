@@ -37,8 +37,6 @@ def current_zk_backup_path() -> pathlib.Path:
         file.touch(exist_ok=True)
     return file
 
-CURRENT_ZK_BACKUP_PATH = current_zk_backup_path()
-
 
 def from_zk(path: str) -> Dict:
     "Access eng-mindscope Zookeeper, return config dict."
@@ -114,11 +112,11 @@ class ConfigFile(collections.UserDict):
     A dictionary wrapper around a serialized local copy of previously fetched zookeeper records.
     """
 
-    file: pathlib.Path = current_zk_backup_path()
     lock: threading.Lock = threading.Lock()
 
     def __init__(self):
         super().__init__()
+        self.file: pathlib.Path = current_zk_backup_path()
         self.data = from_file(self.file)
 
     def write(self):
