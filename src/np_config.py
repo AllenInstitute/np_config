@@ -174,14 +174,6 @@ class ConfigServer(KazooClient):
 
     def __init__(self, hosts=ZK_HOST_PORT):
         super().__init__(hosts, timeout=10)
-        try:
-            backup_zk(self)
-        except:
-            logging.debug(
-                f"Could not update local zookeeper backup file {self.file}",
-                exc_info=True,
-            )
-            pass
 
     def __getitem__(self, key) -> Dict:
         if self.exists(key):
@@ -235,3 +227,7 @@ def backup_zk(zk: ConfigServer = None):
 
     with zk:
         backup(zk)
+
+backup_zk() 
+# we need to know that zk and the file backup are accesible at startup, this is a good
+# test of both and a full backup is desired anyway
