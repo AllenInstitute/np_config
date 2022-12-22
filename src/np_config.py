@@ -210,7 +210,11 @@ def backup_zk(zk: ConfigServer = None):
     "Recursively backup all zookeeper records to local file."
     if not zk:
         zk = ConfigServer()
-
+        
+    if isinstance(zk, ConfigServer.backup.__class__): 
+        # ZK isn't connected, so we can't backup
+        return
+    
     def backup(zk: ConfigServer, parent="/"):
         for key in zk.get_children(parent):
             path = "/".join([parent, key]) if parent != "/" else "/" + key
