@@ -14,7 +14,7 @@ def test_zk_file_cls():
 
 
 def test_zk_backup():
-    backup = np_config.DEFAULT_ZK_BACKUP_PATH
+    backup = np_config.current_zk_backup_path()
     backup.unlink()
     server = np_config.ConfigServer()
     np_config.backup_zk(server)
@@ -25,7 +25,7 @@ def test_zk_backup():
 
 
 def test_from_file():
-    backup = np_config.DEFAULT_ZK_BACKUP_PATH
+    backup = np_config.current_zk_backup_path()
     if backup.exists():
         assert np_config.from_file(backup)
 
