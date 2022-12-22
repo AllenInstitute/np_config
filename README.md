@@ -1,8 +1,8 @@
 **For use on internal Allen Institute network**
 
-- fetch configs from ZooKeeper via their path:
+- fetch configs from ZooKeeper or .yaml/.json file via their path:
 ```
-test_config: dict = np_config.fetch_config(
+test_config: dict = np_config.fetch(
     '/projects/np_logging_test/defaults/logging'
 )
 ```

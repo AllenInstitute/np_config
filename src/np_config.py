@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import collections
 import json
 import logging
@@ -23,12 +21,12 @@ yaml.add_representer(
     ),
 )
 
-def fetch_zk_config(path: str) -> Dict:
+def fetch_zk(path: str) -> Dict:
     "Access eng-mindscope Zookeeper, return config dict."
     with ConfigServer() as zk:
         return zk[path]
 
-def fetch_file_config(path: pathlib.Path) -> Dict:
+def fetch_file(path: pathlib.Path) -> Dict:
     "Read file (yaml or json), return dict."
     try:
         with path.open() as f:
@@ -40,7 +38,7 @@ def fetch_file_config(path: pathlib.Path) -> Dict:
     except:
         return dict()
 
-def fetch_config(arg: Union[str, Mapping, pathlib.Path]) -> Dict[Any, Any]:
+def fetch(arg: Union[str, Mapping, pathlib.Path]) -> Dict[Any, Any]:
     "Differentiate a file path from a ZK path and return corresponding dict."
 
     if isinstance(arg, Mapping):
@@ -50,14 +48,14 @@ def fetch_config(arg: Union[str, Mapping, pathlib.Path]) -> Dict[Any, Any]:
         # first rule-out that the output isn't a filepath
         path = pathlib.Path(arg).resolve()
         if path.is_file() or path.suffix:
-            config = fetch_file_config(path)
+            config = fetch_file(path)
 
         elif isinstance(arg, str):
             # likely a ZK path
             path = arg.replace("\\", "/")
             if path[0] != "/":
                 path = "/" + path
-            config = fetch_zk_config(path)
+            config = fetch_zk(path)
     else:
         raise ValueError(
             "Logging config input should be a path to a .yaml or .json file, a ZooKeeper path, or a python logging config dict."
@@ -65,7 +63,7 @@ def fetch_config(arg: Union[str, Mapping, pathlib.Path]) -> Dict[Any, Any]:
 
     return dict(**config)
 
-def dump_file_config(config: Dict, path: pathlib.Path):
+def dump_file(config: Dict, path: pathlib.Path):
     "Dump dict to file (yaml or json)"
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open('w') as f:
@@ -99,12 +97,12 @@ class ConfigFile(collections.UserDict):
             self.file.parent.mkdir(parents=True, exist_ok=True)
             self.file.touch()
         super().__init__()
-        self.data = fetch_file_config(self.file)
+        self.data = fetch_file(self.file)
     
     def write(self):    
         with self.lock:
             try:
-                dump_file_config(self.data, self.file)
+                dump_file(self.data, self.file)
                 logging.debug(f"Updated local zookeeper backup file {self.file}")
             except OSError:
                 pass
