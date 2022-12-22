@@ -1,0 +1,6 @@
+-r requirements.txt
+poetry==1.*
+pytest==7.*
+black
+mypy
+types-PyYAML
