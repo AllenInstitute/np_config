@@ -29,7 +29,9 @@ yaml.add_representer(
 
 def current_zk_backup_path() -> pathlib.Path:
     """Path to file with today's date."""
-    file = DEFAULT_ZK_BACKUP_PATH.with_stem(DEFAULT_ZK_BACKUP_PATH.stem + "-" + datetime.date.today().strftime("%Y-%m-%d"))
+    file = DEFAULT_ZK_BACKUP_PATH.with_name(
+        DEFAULT_ZK_BACKUP_PATH.stem + "-" + datetime.date.today().strftime("%Y-%m-%d") + DEFAULT_ZK_BACKUP_PATH.suffix
+        )
     if not file.exists():
         file.parent.mkdir(parents=True, exist_ok=True)
         file.touch(exist_ok=True)
