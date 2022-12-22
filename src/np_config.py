@@ -1,4 +1,5 @@
 import collections
+import datetime
 import json
 import logging
 import pathlib
@@ -15,7 +16,7 @@ MINDSCOPE_SERVER: str = "eng-mindscope.corp.alleninstitute.org"
 
 ROOT_DIR: pathlib.Path = pathlib.Path(__file__).absolute().parent.parent
 DEFAULT_ZK_BACKUP_PATH = ROOT_DIR / "resources" / "zk_backup.json"
-
+"Not for use: may be modified to ensure file is accessible."
 
 # preserve order of keys in dict
 yaml.add_representer(
@@ -24,6 +25,17 @@ yaml.add_representer(
         self, data.items()
     ),
 )
+
+
+def current_zk_backup_path() -> pathlib.Path:
+    """Path to file with today's date."""
+    file = DEFAULT_ZK_BACKUP_PATH.with_stem(DEFAULT_ZK_BACKUP_PATH.stem + "-" + datetime.date.today().strftime("%Y-%m-%d"))
+    if not file.exists():
+        file.parent.mkdir(parents=True, exist_ok=True)
+        file.touch(exist_ok=True)
+    return file
+
+CURRENT_ZK_BACKUP_PATH = current_zk_backup_path()
 
 
 def from_zk(path: str) -> Dict:
@@ -100,13 +112,10 @@ class ConfigFile(collections.UserDict):
     A dictionary wrapper around a serialized local copy of previously fetched zookeeper records.
     """
 
-    file: pathlib.Path = DEFAULT_ZK_BACKUP_PATH
+    file: pathlib.Path = current_zk_backup_path()
     lock: threading.Lock = threading.Lock()
 
     def __init__(self):
-        if not self.file.exists():
-            self.file.parent.mkdir(parents=True, exist_ok=True)
-            self.file.touch()
         super().__init__()
         self.data = from_file(self.file)
 
