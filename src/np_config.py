@@ -195,9 +195,10 @@ class ConfigServer(KazooClient):
     def __enter__(self):
         try:
             self.start(timeout=1)
-        except Exception as exc:
+        except Exception:
             if not self.connected:
                 logging.warning(f"Could not connect to zookeeper server {self.hosts}")
+                return self.backup
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
