@@ -12,7 +12,7 @@ authors = [
 ]
 maintainers = ["Ben Hardcastle <ben.hardcastle@alleninstitute.org>"]
 readme = "README.md"
-include = ["resources/*"]
+include = ["tests/*"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
