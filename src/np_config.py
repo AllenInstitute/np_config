@@ -168,47 +168,56 @@ class ConfigServer(KazooClient):
     backup - modified from mpeconfig.
     """
 
-    backup = ConfigFile()
-
-    def __new__(cls, *args, **kwargs) -> Union[KazooClient, Dict]:  # type: ignore
+    backup = ConfigFile(LOCAL_ZK_BACKUP_PATH)
+    "Keeps a local backup of all zookeeper records."
+    record: ConfigFile = SESSION_RECORD
+    "Keeps a log of all zookeeper records fetched during a session."
+    
+    def __new__(cls, *args, **kwargs) -> Union[KazooClient, ConfigFile]:  # type: ignore
         if not host_responsive(MINDSCOPE_SERVER):
             logging.debug("Could not connect to Zookeeper, using local backup file.")
             return cls.backup
-        return super().__new__(cls, *args, **kwargs)
+        return super().__new__(cls)
 
-    def __init__(self, hosts=ZK_HOST_PORT):
+    def __init__(self, hosts: str = ZK_HOST_PORT, disable_record_keeping: bool = False):
         super().__init__(hosts, timeout=10)
-
+        self.disable_record_keeping = disable_record_keeping
+    
+    def update_session_record(self, key: str, value: Dict):
+        if not self.disable_record_keeping:
+            self.record[key] = value
+    
     def __getitem__(self, key) -> Dict:
-        if self.exists(key):
-            value = yaml.load(self.get(key)[0], Loader=yaml.loader.Loader)
-            if value is None:
-                value = dict()
-            self.backup[key] = value
-            return value
+        try:
+            node = self.get(key)
+        except:
+            raise KeyError(f"{key} not found in zookeeper.")
         else:
-            raise KeyError(key)
+            value = yaml.load(node[0] or '', Loader=yaml.loader.Loader) or dict()
+            self.update_session_record(key, value)
+            return value
 
     def __setitem__(self, key, value):
-        if value is None:
-            value = dict()
         self.ensure_path(key)
-        self.set(key, bytes(yaml.dump(value), 'utf-8'))
-        self.backup[key] = value
+        self.set(key, bytes(yaml.dump(value or dict()), 'utf-8'))
+        self.update_session_record(key, value)
 
     def __delitem__(self, key):
-        if self.exists(key):
+        try:
             self.delete(key)
-            del self.backup[key]
-
+        except Exception as exc:
+            raise KeyError(f"{key} not found in zookeeper.") from exc
+        
     def __enter__(self):
         try:
             self.start(timeout=1)
-        except Exception:
+        except:
             if not self.connected:
-                logging.warning(f"Could not connect to zookeeper server {self.hosts}")
+                logging.warning(f"Could not connect to zookeeper server {self.hosts}", exc_info=True)
                 return self.backup
-        return self
+        else:
+            return self
+        raise 
 
     def __exit__(self, exception_type, exception_value, traceback):
         self.stop()
