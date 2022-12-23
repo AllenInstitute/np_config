@@ -100,47 +100,60 @@ def host_responsive(host: str) -> bool:
 
 class ConfigFile(collections.UserDict):
     """
-    A dictionary wrapper around a serialized local copy of previously fetched zookeeper records.
+    A dictionary wrapper around a serialized local copy of a config.
+    
+    Used for keeping a full backup of all configs on zookeeper, or for keeping a record
+    of the config fetched during a session.
     """
 
     lock: threading.Lock = threading.Lock()
 
-    def __init__(self):
+    def __init__(self, file: pathlib.Path = CURRENT_SESSION_ZK_RECORD_PATH):
         super().__init__()
-        self.file: pathlib.Path = current_zk_backup_path()
-        self.data = from_file(self.file)
+        self.file = file
+        if self.file.exists():
+            self.data = from_file(self.file)
 
     def write(self):
+        if not self.file.exists():
+            self.file.parent.mkdir(parents=True, exist_ok=True)
+            self.file.touch(exist_ok=True)
         with self.lock:
             try:
                 dump_file(self.data, self.file)
-                logging.debug(f"Updated local zookeeper backup file {self.file}")
             except OSError:
                 logging.debug(
-                    f"Could not update local zookeeper backup file {self.file}",
+                    f"Could not update local config file {self.file}",
                     exc_info=True,
                 )
                 pass
+            else:
+                logging.debug(f"Updated local config file {self.file}")
 
     def __getitem__(self, key: Any):
-        logging.debug(f"Fetching {key} from local zookeeper backup")
+        logging.debug(f"Fetching {key} from local config backup")
         try:
             super().__getitem__(key)
-        except Exception as e:
-            raise ConnectionError(
-                f"Could not connect to Zookeeper, and {key} not found in local backup file."
-            ) from e
+        except Exception as exc:
+            raise KeyError(
+                f"{key} not found in local config file {self.file}"
+            ) from exc
 
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
-        logging.debug(f"{key} updated in local zookeeper backup")
         self.write()
+        logging.debug(f"{key} updated in local config file")
 
     def __delitem__(self, key: Any):
-        if key in self.data.keys():
+        try:
             super().__delitem__(key)
-            logging.debug(f"{key} deleted from local zookeeper backup")
+        except Exception as exc:
+            raise KeyError(
+                f"{key} not found in local config file {self.file}"
+            ) from exc
+        else:
             self.write()
+            logging.debug(f"{key} deleted from local config file")
 
     def __enter__(self):
         return self
