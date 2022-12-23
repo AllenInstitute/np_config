@@ -42,18 +42,13 @@ def from_zk(path: str) -> Dict:
 
 def from_file(path: pathlib.Path) -> Dict:
     "Read file (yaml or json), return dict."
-    try:
-        with path.open() as f:
-            if path.suffix == ".yaml":
-                result = yaml.load(f, Loader=yaml.loader.Loader)
-                return result or dict()
-            if path.suffix == ".json":
-                result = json.load(f)
-                return result or dict()
-        raise ValueError(f"Logging config {path} should be a .yaml or .json file.")
-    except:
-        return dict()
-
+    with path.open('r') as f:
+        if path.suffix in (".yaml", ".yml"):
+            return yaml.load(f, Loader=yaml.loader.Loader) or dict()
+        elif path.suffix == ".json":
+            return json.load(f, path) or dict()
+    raise ValueError(f"Config at {path} should be a .yaml or .json file.")
+    
 
 def fetch(arg: Union[str, Mapping, pathlib.Path]) -> Dict[Any, Any]:
     "Differentiate a file path from a ZK path and return corresponding dict."
