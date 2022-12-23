@@ -178,14 +178,18 @@ class ConfigServer(KazooClient):
     def __getitem__(self, key) -> Dict:
         if self.exists(key):
             value = yaml.load(self.get(key)[0], Loader=yaml.loader.Loader)
+            if value is None:
+                value = dict()
             self.backup[key] = value
             return value
         else:
             raise KeyError(key)
 
     def __setitem__(self, key, value):
+        if value is None:
+            value = dict()
         self.ensure_path(key)
-        self.set(key, value)
+        self.set(key, bytes(yaml.dump(value), 'utf-8'))
         self.backup[key] = value
 
     def __delitem__(self, key):
