@@ -161,7 +161,8 @@ class ConfigFile(collections.UserDict):
     def __exit__(self, exception_type, exception_value, traceback):
         self.write()
 
-
+SESSION_RECORD: collections.UserDict = ConfigFile(CURRENT_SESSION_ZK_RECORD_PATH)
+    
 class ConfigServer(KazooClient):
     """
     A dictionary and context API wrapper around the zookeeper interface, with local json
@@ -226,29 +227,26 @@ class ConfigServer(KazooClient):
 def backup_zk(zk: ConfigServer = None):
     "Recursively backup all zookeeper records to local file."
     if not zk:
-        zk = ConfigServer()
+        zk = ConfigServer(disable_record_keeping=True)
         
     if isinstance(zk, ConfigServer.backup.__class__): 
-        # ZK isn't connected, so we can't backup
+        logging.debug("Could not connect to zookeeper, skipping backup.")
         return
     
     def backup(zk: ConfigServer, parent="/"):
         for key in zk.get_children(parent):
             path = "/".join([parent, key]) if parent != "/" else "/" + key
             try:
-                value = zk.get(path)[0]
-            except:
+                value = zk[path]
+            except KeyError:
                 continue
             if value:
-                zk.backup[f"{path}"] = yaml.load(
-                    zk.get(path)[0], Loader=yaml.loader.Loader
-                )
+                zk.backup[path] = value
             else:
                 backup(zk, path)
-
     with zk:
         backup(zk)
 
 backup_zk() 
 # we need to know that zk and the file backup are accesible at startup, this is a good
-# test of both and a full backup is desired anyway
+# test of both and a regular full backup is desirable anyway
