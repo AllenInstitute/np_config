@@ -11,13 +11,6 @@ from typing import Any, Dict, Mapping, Union
 import yaml
 from kazoo.client import KazooClient
 
-ZK_HOST_PORT: str = "eng-mindscope:2181"
-MINDSCOPE_SERVER: str = "eng-mindscope.corp.alleninstitute.org"
-
-ROOT_DIR: pathlib.Path = pathlib.Path(__file__).absolute().parent.parent
-DEFAULT_ZK_BACKUP_PATH = ROOT_DIR / "resources" / "zk_backup.json"
-"Not for use: may be modified to ensure file is accessible."
-
 # preserve order of keys in dict
 yaml.add_representer(
     dict,
@@ -26,17 +19,20 @@ yaml.add_representer(
     ),
 )
 
+ZK_HOST_PORT: str = "eng-mindscope:2181"
+MINDSCOPE_SERVER: str = "eng-mindscope.corp.alleninstitute.org"
 
-def current_zk_backup_path() -> pathlib.Path:
-    """Path to file with today's date."""
-    file = DEFAULT_ZK_BACKUP_PATH.with_name(
-        DEFAULT_ZK_BACKUP_PATH.stem + "-" + datetime.date.today().strftime("%Y-%m-%d") + DEFAULT_ZK_BACKUP_PATH.suffix
-        )
-    if not file.exists():
-        file.parent.mkdir(parents=True, exist_ok=True)
-        file.touch(exist_ok=True)
-    return file
+ROOT_DIR: pathlib.Path = pathlib.Path(__file__).absolute().parent.parent
+LOCAL_DATA_PATH = ROOT_DIR / "resources"
 
+LOCAL_ZK_BACKUP_PATH = LOCAL_DATA_PATH / "zk_backup.yaml"
+"File for keeping a full backup of Zookeeper configs."
+
+session_start_time = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+CURRENT_SESSION_ZK_RECORD_PATH = LOCAL_DATA_PATH / f"zk_record-{pathlib.Path().cwd().name}-{session_start_time}.yaml"
+"File for keeping a record of configs accessed from ZK during the current session."
+
+SESSION_RECORD: collections.UserDict
 
 def from_zk(path: str) -> Dict:
     "Access eng-mindscope Zookeeper, return config dict."
