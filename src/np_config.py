@@ -10,6 +10,7 @@ import logging.config
 import pathlib
 import platform
 import subprocess
+import sys
 import threading
 from typing import Any, Dict, Generator, Mapping, Union
 
@@ -49,6 +50,14 @@ SESSION_ZK_RECORD_FILE = zk_record.with_suffix(
 "File for keeping a record of configs accessed from ZK during the current session."
 
 SESSION_ZK_RECORD: "RecordedZK"  # created after class definition
+
+def is_connected(host: str = MINDSCOPE_SERVER) -> bool:
+    "Use OS's `ping` cmd to check if `host` is connected."
+    command = ["ping", "-n" if "win" in sys.platform else "-c", "1", host]
+    try:
+        return subprocess.call(command, stdout=subprocess.PIPE, timeout=0.1) == 0
+    except subprocess.TimeoutExpired:
+        return False
 
 
 def recorded_zk_config() -> "RecordedZK":
@@ -312,13 +321,14 @@ class ConfigZK(KazooClient):
             return self
         try:
             self.start(timeout=1)
-        except:
-            if not self.connected:
-                logger.warning(
-                    f"Could not connect to zookeeper server {self.hosts}", exc_info=True
+        except Exception as exc:
+            if not is_connected():
+                logger.error(
+                    "Starting the Kazoo client failed: %s", self.hosts, exc_info=True
                 )
-                raise
-        finally:
+                raise ConnectionError(f"Zookeeper server is unreachable: {MINDSCOPE_SERVER}") from exc
+            raise exc
+        else:
             return self
 
     def __exit__(self, *args, **kwargs):
