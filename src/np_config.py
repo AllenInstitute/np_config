@@ -60,8 +60,8 @@ def is_connected(host: str = MINDSCOPE_SERVER) -> bool:
         return False
 
 
-def recorded_zk_config() -> "RecordedZK":
-    return RecordedZK(record_file=SESSION_ZK_RECORD_FILE)
+def recorded_zk_config(**kwargs) -> "RecordedZK":
+    return RecordedZK(record_file=SESSION_ZK_RECORD_FILE, **kwargs)
 
 
 def cleanup_zk_records():
@@ -91,9 +91,9 @@ def cleanup_zk_records():
 atexit.register(cleanup_zk_records)
 
 
-def from_zk(path: str) -> Dict:
+def from_zk(path: str, **kwargs) -> Dict:
     "Access eng-mindscope Zookeeper, return config dict."
-    with recorded_zk_config() as zk:
+    with recorded_zk_config(**kwargs) as zk:
         return zk[path]
 
 
@@ -121,7 +121,7 @@ def normalize_zk_path(path: str) -> str:
     return path
 
 
-def fetch(arg: Union[str, Mapping, pathlib.Path]) -> Dict[Any, Any]:
+def fetch(arg: Union[str, Mapping, pathlib.Path], **kwargs) -> Dict[Any, Any]:
     "Differentiate a file path from a ZK path and return corresponding dict."
 
     if isinstance(arg, Mapping):
@@ -136,7 +136,7 @@ def fetch(arg: Union[str, Mapping, pathlib.Path]) -> Dict[Any, Any]:
         elif isinstance(arg, str):
             # likely a ZK path
             path_str = normalize_zk_path(arg)
-            config = from_zk(path_str)
+            config = from_zk(path_str, **kwargs)
     else:
         raise ValueError(
             "Logging config input should be a path to a .yaml or .json file, a ZooKeeper path, or a python logging config dict."
@@ -323,7 +323,7 @@ class ConfigZK(KazooClient):
             self.start(timeout=1)
         except Exception as exc:
             if not is_connected():
-                logger.error(
+                logger.debug(
                     "Starting the Kazoo client failed: %s", self.hosts, exc_info=True
                 )
                 raise ConnectionError(f"Zookeeper server is unreachable: {MINDSCOPE_SERVER}") from exc
