@@ -52,6 +52,7 @@ SESSION_ZK_RECORD_FILE = zk_record.with_suffix(
 
 SESSION_ZK_RECORD: "RecordedZK"  # created after class definition
 
+
 def is_connected(host: str = MINDSCOPE_SERVER) -> bool:
     "Use OS's `ping` cmd to check if `host` is connected."
     command = ["ping", "-n" if "win" in sys.platform else "-c", "1", host]
@@ -87,7 +88,7 @@ def cleanup_zk_records():
                     f"Removing un-changed zk record: {pair[0].stem.split('.')[0]}"
                 )
                 pair[0].unlink()
-            break # only compare against the next most recent record
+            break  # only compare against the next most recent record
 
 
 atexit.register(cleanup_zk_records)
@@ -198,6 +199,7 @@ def backup_zk(file: pathlib.Path = LOCAL_ZK_BACKUP_FILE):
                 backup[key] = value
             else:
                 get(zk, key)
+
     with zk:
         get(zk)
     to_file(backup, file)
@@ -232,8 +234,7 @@ class ConfigFile(collections.UserDict):
                 to_file(self.data, self.file)
             except OSError:
                 logger.debug(
-                    f"Could not update local config file {self.file}",
-                    exc_info=True,
+                    f"Could not update local config file {self.file}", exc_info=True,
                 )
                 pass
             else:
@@ -331,7 +332,9 @@ class ConfigZK(KazooClient):
                 logger.debug(
                     "Starting the Kazoo client failed: %s", self.hosts, exc_info=True
                 )
-                raise ConnectionError(f"Zookeeper server is unreachable: {MINDSCOPE_SERVER}") from exc
+                raise ConnectionError(
+                    f"Zookeeper server is unreachable: {MINDSCOPE_SERVER}"
+                ) from exc
             raise exc
         else:
             return self
