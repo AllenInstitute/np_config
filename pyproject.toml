@@ -3,7 +3,7 @@ name = "np_config"
 
 [tool.poetry]
 name = "np_config"
-version = "0.2.5"
+version = "0.3.0"
 description = "Zookeeper configs with local backup, repackaging code from AIBS mpeconfig."
 authors = [
     "Ben Hardcastle <ben.hardcastle@alleninstitute.org>",
@@ -12,7 +12,6 @@ authors = [
 ]
 maintainers = ["Ben Hardcastle <ben.hardcastle@alleninstitute.org>"]
 readme = "README.md"
-include = ["tests/*"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -30,13 +29,13 @@ kazoo = "~2.8"
 pyyaml = "^5.3.0"
 types-PyYaml = "*"
 appdirs = "^1.0"
+requests = "*"
 pip-tools = {version = "*", optional = true}
 isort = {version = "*", optional = true}
 mypy = {version = "*", optional = true}
 black = {version = "*", optional = true}
 pytest = {version = "*", optional = true}
 poetry = {version = "*", optional = true}
-requests = "*"
 
 [tool.poetry.extras]
 dev = [
