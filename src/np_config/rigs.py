@@ -54,13 +54,13 @@ comp_ids, rig_ids, cluster_ids = requests.get(SERVER).json().values()
 
 # make mappings for easier lookup
 RIG_ID_TO_COMP_IDS: dict[str, list[str]] =  {k: v.get('comp_ids', []) for k,v in rig_ids.items()}
-"Keys are rig IDs (`'NP.1'`), values are lists of computer IDs (`['NP.1-Acq', ...]`)."
+"Keys are rig IDs (`NP.1`), values are lists of computer IDs (`['NP.1-Acq', ...]`)."
 
 COMP_ID_TO_HOSTNAME: dict[str, str] = {k: v.get('hostname', '').upper() for k,v in comp_ids.items()}
-"Keys are computer IDs (`'NP.1-Acq'`), values are hostnames (`'W10DT713843'`)."
+"Keys are computer IDs (`NP.1-Acq`), values are hostnames (`W10DT713843`)."
 
 HOSTNAME_TO_COMP_ID: dict[str, str] = {v.upper(): k for k,v in COMP_ID_TO_HOSTNAME.items()}
-"Keys are hostnames (`'W10DT713843'`), values are computer IDs (`'NP.1-Acq'`)."
+"Keys are hostnames (`W10DT713843`), values are computer IDs (`NP.1-Acq`)."
 
 
 # local computer properties ------------------------------------------------------------
@@ -72,7 +72,7 @@ COMP_ID: str = (
     or os.environ.get("AIBS_COMP_ID")
     or HOSTNAME
 )
-"AIBS MPE computer ID for this computer, e.g. `'NP.1-Sync'`, or hostname if not a computer on a rig."
+"AIBS MPE computer ID for this computer, e.g. `NP.1-Sync`, or hostname if not a rig-connected computer."
 
 RIG_ID: str | None = (
     os.environ.get("AIBS_RIG_ID", "").upper()
@@ -81,9 +81,10 @@ RIG_ID: str | None = (
     or ("BTVTest.1" if os.environ.get("USE_TEST_RIG", False) else None)
     or None
 )
-"AIBS MPE rig ID, e.g. `'NP.1'`, if set via env var."
+"AIBS MPE rig ID, e.g. `NP.1`, if running on a rig-connected computer."
 
 RIG_IDX: int | None = re.findall(R"NP.([\d]+)", RIG_ID)[0] if RIG_ID and "NP." in RIG_ID else None
+"AIBS MPE NP-rig index, e.g. `1` for NP.1, if running on a rig-connected computer."
 
 if not RIG_ID:
     logger.debug("Not running from an NP rig: connections to services won't be made. To use BTVTest.1, set env var `USE_TEST_RIG = 1`")
@@ -117,7 +118,10 @@ class Rig():
 
     """
     
+    id: str
+    "AIBS MPE rig ID, e.g. `NP.1`"
     idx: int
+    "AIBS MPE NP-rig index, e.g. `1` for NP.1"
     
     def __init__(self, np_rig_idx: Optional[int] = None):
         np_rig_idx = np_rig_idx or RIG_IDX
@@ -128,29 +132,35 @@ class Rig():
     
     @property
     def sync(self) -> str:
+        "Hostname for the Sync computer."
         return COMP_ID_TO_HOSTNAME[self.id + "-Sync"]
     SYNC = Sync = sync
 
     @property
     def mon(self) -> str:
+        "Hostname for the Mon computer."
         return COMP_ID_TO_HOSTNAME[self.id + "-Mon"]
     MON = Mon = vidmon = VidMon = VIDMON = mon
     
     @property
     def acq(self) -> str:
+        "Hostname for the Acq computer."
         return COMP_ID_TO_HOSTNAME[self.id + "-Acq"]
     ACQ = Acq = acq
     
     @property
     def stim(self) -> str:
+        "Hostname for the Stim computer."
         return COMP_ID_TO_HOSTNAME[self.id + "-Stim"]
     STIM = Stim = stim
     
     @property
     def config(self) -> dict[str, Any]:
+        "Rig-wide config dict, fetched from ZooKeeper."
         return np_config.from_zk(f"/rigs/{self.id}")
 
 RIG_CONFIG: dict[str, Any] | None = Rig().config if RIG_IDX else None
+"Rig-wide config dict, fetched from ZooKeeper, or `None` if not running on a rig."
 
 if __name__ == "__main__":
     import doctest
