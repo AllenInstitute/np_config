@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import atexit
 import collections
 import contextlib
 import datetime
-import functools
 import itertools
 import json
 import logging
@@ -12,7 +13,7 @@ import platform
 import subprocess
 import sys
 import threading
-from typing import Any, Dict, Generator, Mapping, Union
+from typing import Any, Generator, Mapping
 
 import appdirs
 import yaml
@@ -70,7 +71,7 @@ def cleanup_zk_records():
 
     def pairwise(iterable):
         "pairwise('ABCDEFG') --> AB BC CD DE EF FG"
-        # itertools version not in <3.10
+        # itertools version not available in <3.10
         a, b = itertools.tee(iterable)
         next(b, None)
         return zip(a, b)
@@ -86,18 +87,19 @@ def cleanup_zk_records():
                     f"Removing un-changed zk record: {pair[0].stem.split('.')[0]}"
                 )
                 pair[0].unlink()
+            break # only compare against the next most recent record
 
 
 atexit.register(cleanup_zk_records)
 
 
-def from_zk(path: str, **kwargs) -> Dict:
+def from_zk(path: str, **kwargs) -> dict:
     "Access eng-mindscope Zookeeper, return config dict."
     with recorded_zk_config(**kwargs) as zk:
         return zk[path]
 
 
-def from_file(file: pathlib.Path) -> Dict:
+def from_file(file: pathlib.Path) -> dict:
     "Read file (yaml or json), return dict."
     file = pathlib.Path(file)
     with file.open("r") as f:
@@ -121,7 +123,7 @@ def normalize_zk_path(path: str) -> str:
     return path
 
 
-def fetch(arg: Union[str, Mapping, pathlib.Path], **kwargs) -> Dict[Any, Any]:
+def fetch(arg: str | Mapping | pathlib.Path, **kwargs) -> dict[Any, Any]:
     "Differentiate a file path from a ZK path and return corresponding dict."
 
     if isinstance(arg, Mapping):
@@ -145,7 +147,7 @@ def fetch(arg: Union[str, Mapping, pathlib.Path], **kwargs) -> Dict[Any, Any]:
     return dict(**config)
 
 
-def to_file(config: Dict, file: pathlib.Path):
+def to_file(config: dict, file: pathlib.Path):
     "Dump dict to file (yaml or json, based on file extension supplied)."
     file = pathlib.Path(file)
     file.parent.mkdir(parents=True, exist_ok=True)
@@ -157,7 +159,7 @@ def to_file(config: Dict, file: pathlib.Path):
     raise ValueError(f"Logging config {file} should be a .yaml or .json file.")
 
 
-def to_zk(config: Dict, path: str):
+def to_zk(config: dict, path: str):
     "Dump config to Zookeeper at path, deleting path if config is empty."
     path = normalize_zk_path(path)
     with ConfigZK() as zk:
@@ -183,7 +185,10 @@ def backup_zk(file: pathlib.Path = LOCAL_ZK_BACKUP_FILE):
     backup = dict()
 
     def get(zk: ConfigZK, parent="/"):
-        for child in zk.get_children(parent):
+        children = zk.get_children(parent)
+        if not children:
+            return
+        for child in children:
             key = parent + child if parent == "/" else "/".join([parent, child])
             try:
                 value = zk[key]
@@ -193,7 +198,6 @@ def backup_zk(file: pathlib.Path = LOCAL_ZK_BACKUP_FILE):
                 backup[key] = value
             else:
                 get(zk, key)
-
     with zk:
         get(zk)
     to_file(backup, file)
@@ -294,14 +298,15 @@ class ConfigZK(KazooClient):
         except KeyError:
             return default
 
-    def __getitem__(self, key) -> Dict:
+    def __getitem__(self, key) -> dict:
         with self._start():
             try:
                 node = super().get(key)
             except Exception as exc:
                 raise KeyError(f"{key!r} not found in zookeeper.") from exc
             else:
-                value = yaml.load(node[0] or "", Loader=yaml.loader.Loader) or dict()
+                item = node[0] if node and len(node) else None
+                value = yaml.load(item or "", Loader=yaml.loader.Loader) or dict()
                 return value
 
     def __setitem__(self, key, value):
