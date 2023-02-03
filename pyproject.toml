@@ -36,6 +36,7 @@ mypy = {version = "*", optional = true}
 black = {version = "*", optional = true}
 pytest = {version = "*", optional = true}
 poetry = {version = "*", optional = true}
+requests = "*"
 
 [tool.poetry.extras]
 dev = [
