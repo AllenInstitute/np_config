@@ -1,7 +1,7 @@
 import datetime
 
-from np_config import LOCAL_ZK_BACKUP_FILE, backup_zk
-
+from .np_config import *
+from .rigs import *
 if (
     not LOCAL_ZK_BACKUP_FILE.exists()
     or datetime.datetime.now()

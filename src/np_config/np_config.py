@@ -218,7 +218,7 @@ class ConfigFile(collections.UserDict):
 
     def write(self):
         if self.read_only:
-            logging.debug("Not writing to read-only config file %s", self.file)
+            logger.debug("Not writing to read-only config file %s", self.file)
             return
         if not self.file.exists():
             self.file.parent.mkdir(parents=True, exist_ok=True)

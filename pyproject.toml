@@ -18,6 +18,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+packages = [{include = "np_config", from = "src"}]
 
 [tool.poetry.urls]
 "Repository" = "https://github.com/alleninstitute/np_config"
