@@ -18,6 +18,10 @@ Hostnames for each rig computer [Sync, Mon, Acq, Stim]:
 >>> Rig(1).Acq
 'W10DT713843'
 
+Paths for specific apps running on a rig:
+>>> Rig(1).paths['MVR']
+WindowsPath('//W10DTSM18278/c$/ProgramData/AIBS_MPE/mvr/data')
+
 Config dict for a particular rig, fetched from ZooKeeper /rigs/NP.<idx>:
 >>> Rig(1).config['Acq']
 'W10DT713843'
@@ -30,19 +34,34 @@ properties available by default:
 >>> Rig().config['Acq']             # doctest: +SKIP
 'W10DT713843'
 
+If app is running on the local computer, its path is represented as a local path:
+>>> Rig().paths['Sync']             # doctest: +SKIP
+WindowsPath('C:/ProgramData/AIBS_MPE/sync/data')
+
+...otherwise, as a network path:
+>>> Rig().paths['Stim']             # doctest: +SKIP
+WindowsPath('//W10DT713942/c$/ProgramData/AIBS_MPE/camstim/data')
+
 """
 from __future__ import annotations
 
+import contextlib
+import doctest
+import functools
 import logging
 import os
+import pathlib
 import re
-import socket
-from enum import Enum
-from typing import Any, Optional
+from typing import Any, Hashable, Optional
 
 import requests
 
-import np_config
+if __name__ == "__main__":
+    import utils
+
+    import np_config
+else:
+    from . import np_config, utils
 
 logger = logging.getLogger(__name__)
 
@@ -68,10 +87,15 @@ HOSTNAME_TO_COMP_ID: dict[str, str] = {
 }
 "Keys are hostnames (`W10DT713843`), values are computer IDs (`NP.1-Acq`)."
 
+RIG_ID_TO_HOSTNAMES: dict[str, list[str]] = {
+    k: [COMP_ID_TO_HOSTNAME[comp_id] for comp_id in v]
+    for k, v in RIG_ID_TO_COMP_IDS.items()
+}
+"Keys are rig IDs (`NP.1`), values are lists of hostnames (`['W10DT713843', ...]`)."
 
 # local computer properties ------------------------------------------------------------
 
-HOSTNAME = socket.gethostname().upper()
+HOSTNAME = utils.HOSTNAME
 
 COMP_ID: str = (
     HOSTNAME_TO_COMP_ID.get(HOSTNAME) or os.environ.get("AIBS_COMP_ID") or HOSTNAME
@@ -138,7 +162,7 @@ class Rig:
     "AIBS MPE NP-rig index, e.g. `1` for NP.1"
 
     def __init__(self, np_rig_idx: Optional[int] = None):
-        np_rig_idx = np_rig_idx or RIG_IDX
+        np_rig_idx = RIG_IDX if np_rig_idx is None else np_rig_idx
         if np_rig_idx is None:
             raise ValueError("Rig index not specified and not running on a rig.")
         self.idx = np_rig_idx
@@ -172,16 +196,39 @@ class Rig:
 
     STIM = Stim = stim
 
-    @property
-    def config(self) -> dict[str, Any]:
-        "Rig-wide config dict, fetched from ZooKeeper."
-        return np_config.from_zk(f"/rigs/{self.id}")
+    @functools.cached_property
+    def config(self) -> dict[Hashable, Any]:
+        "Rig-specific config dict, fetched from ZooKeeper."
+        return utils.merge(
+            np_config.from_zk("/np_defaults/configuration"),
+            np_config.from_zk(f"/rigs/{self.id}"),
+        )
 
-
-RIG_CONFIG: dict[str, Any] | None = Rig().config if RIG_IDX else None
-"Rig-wide config dict, fetched from ZooKeeper, or `None` if not running on a rig."
+    @functools.cached_property
+    def paths(self) -> dict[str, pathlib.Path]:
+        """Network paths to data folders for various devices/services, using 
+        values from ZooKeeper /np_defaults/configuration and /rigs/NP.<idx>/paths.
+        """       
+        paths = dict()
+        
+        for service, service_config in self.config['services'].items():
+            if 'data' not in service_config:
+                continue
+            data = service_config['data']
+            host = getattr(self, service, service_config.get('host', None))
+            if not host:
+                continue
+            if host in RIG_ID_TO_HOSTNAMES[self.id]:
+                paths[str(service)] = utils.local_or_unc_path(host=host, path=service_config['data'])
+            else:
+                paths[str(service)] = utils.normalize_path(f'//{host}/{data}')
+        for name, path in self.config.get('paths', {}).items():
+           paths[str(name)] = utils.normalize_path(path)
+        
+        return paths
+    
+RIG_CONFIG: dict[Hashable, Any] | None = Rig().config if RIG_IDX else None
+"Rig-specific config dict, fetched from ZooKeeper, or `None` if not running on a rig."
 
 if __name__ == "__main__":
-    import doctest
-
     doctest.testmod()

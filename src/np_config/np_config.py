@@ -13,7 +13,7 @@ import platform
 import subprocess
 import sys
 import threading
-from typing import Any, Generator, Mapping
+from typing import Any, Generator, Hashable, Mapping
 
 import appdirs
 import yaml
@@ -66,7 +66,7 @@ def recorded_zk_config(**kwargs) -> "RecordedZK":
     return RecordedZK(record_file=SESSION_ZK_RECORD_FILE, **kwargs)
 
 
-def cleanup_zk_records():
+def cleanup_zk_records() -> None:
     "Remove current session zk record if it matches previous records, so we maintain config diffs only."
     path = SESSION_ZK_RECORD_FILE.parent
 
@@ -94,13 +94,13 @@ def cleanup_zk_records():
 atexit.register(cleanup_zk_records)
 
 
-def from_zk(path: str, **kwargs) -> dict:
+def from_zk(path: str, **kwargs) -> dict[Hashable, Any]:
     "Access eng-mindscope Zookeeper, return config dict."
     with recorded_zk_config(**kwargs) as zk:
         return zk[path]
 
 
-def from_file(file: pathlib.Path) -> dict:
+def from_file(file: pathlib.Path) -> dict[Hashable, Any]:
     "Read file (yaml or json), return dict."
     file = pathlib.Path(file)
     with file.open("r") as f:
@@ -124,7 +124,7 @@ def normalize_zk_path(path: str) -> str:
     return path
 
 
-def fetch(arg: str | Mapping | pathlib.Path, **kwargs) -> dict[Any, Any]:
+def fetch(arg: str | Mapping | pathlib.Path, **kwargs) -> dict[Hashable, Any]:
     "Differentiate a file path from a ZK path and return corresponding dict."
 
     if isinstance(arg, Mapping):
