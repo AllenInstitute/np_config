@@ -175,6 +175,12 @@ class Rig:
         for comp in ('sync', 'stim', 'mon', 'acq'):
             setattr(self, f'_{comp}', COMP_ID_TO_HOSTNAME[f'{self.id}-{comp.title()}'])
 
+    def __str__(self) -> str:
+        return self.id
+    
+    def __repr__(self):
+        return f'{__class__.__name__}({self.id!r})'
+    
     @property
     def sync(self) -> str:
         "Hostname for the Sync computer."
