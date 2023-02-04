@@ -5,9 +5,10 @@ import doctest
 import logging
 import os
 import pathlib
+import re
 import socket
 import sys
-from typing import Any, Hashable, Mapping, MutableMapping, TypeVar
+from typing import Any, Hashable, Literal, Mapping, MutableMapping, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ def unc_to_local(path: str | pathlib.Path) -> pathlib.Path:
     >>> unc_to_local("//w10dtsm18306/neuropixels_data")
     Traceback (most recent call last):
      ...
-    ValueError: UNC path points to a host + share name (not host + drive letter): insufficient information to construct a local path from //w10dtsm18306/neuropixels_data/
+    ValueError: UNC path points to a host + share name (not host + drive letter): insufficient information to construct a local path from //w10dtsm18306/neuropixels_data
     """
     path: pathlib.Path = normalize_path(path)
     
@@ -107,6 +108,34 @@ def local_or_unc_path(host: str, path: str | pathlib.Path) -> pathlib.Path:
     if host not in str(path):
         return local_to_unc(host, path)
     return normalize_path(path)
+
+def rig_idx(id: str) -> Literal[0,1,2,3,4] | None:
+    """Convert rig ID (`'NP.1'`) to valid rig index (`1`).
     
+    >>> rig_idx('NP.1')
+    1
+    >>> rig_idx('NP1')
+    1
+
+    Also accepts bad input, if index is valid:
+    >>> rig_idx('1')
+    1
+    >>> rig_idx(1)
+    1
+    """
+    valid_idx = (0,1,2,3,4)
+    with contextlib.suppress(ValueError):
+        result = int(id) # if idx already provided
+        if result in valid_idx:
+            return result
+    result = re.findall(fr"NP\.?([\d]+)", id.upper())
+    if not result:
+        return None
+    result = int(result[0])
+    if result not in valid_idx:
+        return None
+    return result
+
+
 if __name__ == "__main__":
     doctest.testmod()

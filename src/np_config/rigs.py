@@ -97,28 +97,25 @@ RIG_ID_TO_HOSTNAMES: dict[str, list[str]] = {
 
 HOSTNAME = utils.HOSTNAME
 
-COMP_ID: str = (
-    HOSTNAME_TO_COMP_ID.get(HOSTNAME) or os.environ.get("AIBS_COMP_ID") or HOSTNAME
+COMP_ID: str | None = (
+    HOSTNAME_TO_COMP_ID.get(HOSTNAME) or os.environ.get("AIBS_COMP_ID") or None
 )
-"AIBS MPE computer ID for this computer, e.g. `NP.1-Sync`, or hostname if not a rig-connected computer."
+"AIBS MPE comp ID for this computer, e.g. `NP.1-Sync`."
 
 RIG_ID: str | None = (
     os.environ.get("AIBS_RIG_ID", "").upper()
     or comp_ids.get(COMP_ID, {}).get("rig_id")
-    or (
-        re.findall(r"NP.[\d]+", COMP_ID)[0]
-        if re.findall(r"NP.[\d]+", COMP_ID)
+    or (f"NP.{utils.rig_idx(COMP_ID)}"
+        if COMP_ID and utils.rig_idx(COMP_ID) is not None
         else None
     )
     or ("BTVTest.1" if os.environ.get("USE_TEST_RIG", False) else None)
     or None
 )
-"AIBS MPE rig ID, e.g. `NP.1`, if running on a rig-connected computer."
+"AIBS MPE NP-rig ID, e.g. `'NP.1'` if running on a computer connected to NP.1."
 
-RIG_IDX: int | None = re.findall(r"NP.([\d]+)", RIG_ID)[
-    0
-] if RIG_ID and "NP." in RIG_ID else None
-"AIBS MPE NP-rig index, e.g. `1` for NP.1, if running on a rig-connected computer."
+RIG_IDX: int | None = utils.rig_idx(RIG_ID)
+"AIBS MPE NP-rig index, e.g. `1` if running on a computer connected to NP.1."
 
 if not RIG_ID:
     logger.debug(
@@ -126,7 +123,7 @@ if not RIG_ID:
     )
 
 logger.info(
-    f"Running from {COMP_ID}, {'connected to ' + RIG_ID if RIG_ID else 'not connected to a rig'}"
+    f"Running from {COMP_ID or HOSTNAME}, {'connected to ' + RIG_ID if RIG_ID else 'not connected to a rig'}"
 )
 
 
@@ -161,38 +158,48 @@ class Rig:
     idx: int
     "AIBS MPE NP-rig index, e.g. `1` for NP.1"
 
-    def __init__(self, np_rig_idx: Optional[int] = None):
-        np_rig_idx = RIG_IDX if np_rig_idx is None else np_rig_idx
-        if np_rig_idx is None:
+    _sync: str
+    _stim: str
+    _mon: str
+    _acq: str
+
+    def __init__(self, idx_or_id: Optional[int | str] = None):
+        idx_or_name = RIG_IDX if idx_or_id is None else idx_or_id
+        if idx_or_name is None:
             raise ValueError("Rig index not specified and not running on a rig.")
-        self.idx = np_rig_idx
-        self.id = f"NP.{np_rig_idx}"
+        idx = utils.rig_idx(idx_or_name)
+        if idx is None:
+            raise ValueError(f"`NP.{idx}` is not a recognized NP-rig") 
+        self.idx: int = idx
+        self.id: str = f"NP.{idx}"
+        for comp in ('sync', 'stim', 'mon', 'acq'):
+            setattr(self, f'_{comp}', COMP_ID_TO_HOSTNAME[f'{self.id}-{comp.title()}'])
 
     @property
     def sync(self) -> str:
         "Hostname for the Sync computer."
-        return COMP_ID_TO_HOSTNAME[self.id + "-Sync"]
+        return self._sync
 
     SYNC = Sync = sync
 
     @property
     def mon(self) -> str:
         "Hostname for the Mon computer."
-        return COMP_ID_TO_HOSTNAME[self.id + "-Mon"]
+        return self._mon
 
     MON = Mon = vidmon = VidMon = VIDMON = mon
 
     @property
     def acq(self) -> str:
         "Hostname for the Acq computer."
-        return COMP_ID_TO_HOSTNAME[self.id + "-Acq"]
+        return self._acq
 
     ACQ = Acq = acq
 
     @property
     def stim(self) -> str:
         "Hostname for the Stim computer."
-        return COMP_ID_TO_HOSTNAME[self.id + "-Stim"]
+        return self._stim
 
     STIM = Stim = stim
 
