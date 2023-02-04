@@ -3,7 +3,7 @@ name = "np_config"
 
 [tool.poetry]
 name = "np_config"
-version = "0.3.1"
+version = "0.4.1"
 description = "Zookeeper configs with local backup, repackaging code from AIBS mpeconfig."
 authors = [
     "Ben Hardcastle <ben.hardcastle@alleninstitute.org>",
