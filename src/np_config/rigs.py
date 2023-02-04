@@ -179,7 +179,7 @@ class Rig:
         return self.id
     
     def __repr__(self):
-        return f'{__class__.__name__}({self.id!r})'
+        return f'{self.__class__.__name__}({self.id!r})'
     
     @property
     def sync(self) -> str:
