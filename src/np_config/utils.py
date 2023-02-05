@@ -10,6 +10,8 @@ import socket
 import sys
 from typing import Any, Hashable, Literal, Mapping, MutableMapping, TypeVar
 
+from typing_extensions import Literal
+
 logger = logging.getLogger(__name__)
 
 HOSTNAME = socket.gethostname().upper()
