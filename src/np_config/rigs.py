@@ -105,7 +105,8 @@ COMP_ID: str | None = (
 RIG_ID: str | None = (
     os.environ.get("AIBS_RIG_ID", "").upper()
     or comp_ids.get(COMP_ID, {}).get("rig_id")
-    or (f"NP.{utils.rig_idx(COMP_ID)}"
+    or (
+        f"NP.{utils.rig_idx(COMP_ID)}"
         if COMP_ID and utils.rig_idx(COMP_ID) is not None
         else None
     )
@@ -169,18 +170,18 @@ class Rig:
             raise ValueError("Rig index not specified and not running on a rig.")
         idx = utils.rig_idx(idx_or_name)
         if idx is None:
-            raise ValueError(f"`NP.{idx}` is not a recognized NP-rig") 
+            raise ValueError(f"`NP.{idx}` is not a recognized NP-rig")
         self.idx: int = idx
         self.id: str = f"NP.{idx}"
-        for comp in ('sync', 'stim', 'mon', 'acq'):
-            setattr(self, f'_{comp}', COMP_ID_TO_HOSTNAME[f'{self.id}-{comp.title()}'])
+        for comp in ("sync", "stim", "mon", "acq"):
+            setattr(self, f"_{comp}", COMP_ID_TO_HOSTNAME[f"{self.id}-{comp.title()}"])
 
     def __str__(self) -> str:
         return self.id
-    
+
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.id!r})'
-    
+        return f"{self.__class__.__name__}({self.id!r})"
+
     @property
     def sync(self) -> str:
         "Hostname for the Sync computer."
@@ -221,25 +222,28 @@ class Rig:
     def paths(self) -> dict[str, pathlib.Path]:
         """Network paths to data folders for various devices/services, using 
         values from ZooKeeper /np_defaults/configuration and /rigs/NP.<idx>/paths.
-        """       
+        """
         paths = dict()
-        
-        for service, service_config in self.config['services'].items():
-            if 'data' not in service_config:
+
+        for service, service_config in self.config["services"].items():
+            if "data" not in service_config:
                 continue
-            data = service_config['data']
-            host = getattr(self, service, service_config.get('host', None))
+            data = service_config["data"]
+            host = getattr(self, service, service_config.get("host", None))
             if not host:
                 continue
             if host in RIG_ID_TO_HOSTNAMES[self.id]:
-                paths[str(service)] = utils.local_or_unc_path(host=host, path=service_config['data'])
+                paths[str(service)] = utils.local_or_unc_path(
+                    host=host, path=service_config["data"]
+                )
             else:
-                paths[str(service)] = utils.normalize_path(f'//{host}/{data}')
-        for name, path in self.config.get('paths', {}).items():
-           paths[str(name)] = utils.normalize_path(path)
-        
+                paths[str(service)] = utils.normalize_path(f"//{host}/{data}")
+        for name, path in self.config.get("paths", {}).items():
+            paths[str(name)] = utils.normalize_path(path)
+
         return paths
-    
+
+
 RIG_CONFIG: dict[Hashable, Any] | None = Rig().config if RIG_IDX else None
 "Rig-specific config dict, fetched from ZooKeeper, or `None` if not running on a rig."
 

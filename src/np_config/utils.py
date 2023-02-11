@@ -18,7 +18,10 @@ HOSTNAME = socket.gethostname().upper()
 
 T = TypeVar("T", bound=MutableMapping[Hashable, Any])
 
-def merge(base: MutableMapping[Hashable, Any], update: Mapping[Hashable, Any]) -> MutableMapping[Hashable, Any]:
+
+def merge(
+    base: MutableMapping[Hashable, Any], update: Mapping[Hashable, Any]
+) -> MutableMapping[Hashable, Any]:
     """
     Utility function to do a deep merge on dictionaries. `base` will be modified, so deep
     copy first if the original needs to be preserved. This is a recursive function, so
@@ -39,6 +42,7 @@ def merge(base: MutableMapping[Hashable, Any], update: Mapping[Hashable, Any]) -
             base[key] = value
     return base
 
+
 def local_to_unc(host: str, path: str | pathlib.Path) -> pathlib.Path:
     """Generate a UNC path (for Windows) from host + local path.
     
@@ -48,9 +52,9 @@ def local_to_unc(host: str, path: str | pathlib.Path) -> pathlib.Path:
     >>> local_to_unc("W10DT713843", "C$/ProgramData/AIBS_MPE/MVR/data").as_posix()
     '//W10DT713843/C$/ProgramData/AIBS_MPE/MVR/data'
     """
-    host = host.strip('\\/ ').upper()
-    path = pathlib.Path(path).as_posix().replace(':', '')
-    return normalize_path(f'//{host}/{path}')
+    host = host.strip("\\/ ").upper()
+    path = pathlib.Path(path).as_posix().replace(":", "")
+    return normalize_path(f"//{host}/{path}")
 
 
 def unc_to_local(path: str | pathlib.Path) -> pathlib.Path:
@@ -66,17 +70,20 @@ def unc_to_local(path: str | pathlib.Path) -> pathlib.Path:
     ValueError: UNC path points to a host + share name (not host + drive letter): insufficient information to construct a local path from //w10dtsm18306/neuropixels_data
     """
     path: pathlib.Path = normalize_path(path)
-    
-    if path.as_posix()[0] != '/':
+
+    if path.as_posix()[0] != "/":
         raise ValueError(f"Path must be UNC (starting with a slash): {path.as_posix()}")
-    
+
     # UNC path starts with host + drive letter or share
     # Path.parts merges UNC host and share, so we need to split manually
-    parts = [_ for _ in path.as_posix().split('/') if _]
-    drive = parts[1].strip('$')
+    parts = [_ for _ in path.as_posix().split("/") if _]
+    drive = parts[1].strip("$")
     if len(drive) > 1:
-        raise ValueError(f"UNC path points to a host + share name (not host + drive letter): insufficient information to construct a local path from {path.as_posix()}")
-    return normalize_path(f'{drive}:/' + '/'.join(parts[2:]))
+        raise ValueError(
+            f"UNC path points to a host + share name (not host + drive letter): insufficient information to construct a local path from {path.as_posix()}"
+        )
+    return normalize_path(f"{drive}:/" + "/".join(parts[2:]))
+
 
 def normalize_path(path: str | pathlib.Path) -> pathlib.Path:
     """Normalize a path to a pathlib.Path object, starting with `//` if a network path.
@@ -85,11 +92,12 @@ def normalize_path(path: str | pathlib.Path) -> pathlib.Path:
     '//W10DT713843/c/ProgramData/AIBS_MPE/MVR/data'
     """
     path = str(path)
-    path = path.replace('\\', '/') # makes the next parts simpler
-    if path[0] == '/' and path[1] != path[0]:
-        path = '/' + path
-        path.replace(':', '')
+    path = path.replace("\\", "/")  # makes the next parts simpler
+    if path[0] == "/" and path[1] != path[0]:
+        path = "/" + path
+        path.replace(":", "")
     return pathlib.Path(path)
+
 
 def local_or_unc_path(host: str, path: str | pathlib.Path) -> pathlib.Path:
     "Convert a UNC path to a local path if running on the host computer specified in the UNC path."
@@ -100,8 +108,8 @@ def local_or_unc_path(host: str, path: str | pathlib.Path) -> pathlib.Path:
                 return _
         for attempt in (
             pathlib.Path(path),
-            pathlib.Path(str(path).replace('$', ':')),
-        ): 
+            pathlib.Path(str(path).replace("$", ":")),
+        ):
             normalized = normalize_path(attempt)
             if not normalized.exists():
                 logger.warning("Path not found in local filesystem: %s", path)
@@ -111,7 +119,8 @@ def local_or_unc_path(host: str, path: str | pathlib.Path) -> pathlib.Path:
         return local_to_unc(host, path)
     return normalize_path(path)
 
-def rig_idx(id: str) -> Literal[0,1,2,3,4] | None:
+
+def rig_idx(id: str | None) -> Literal[0, 1, 2, 3, 4] | None:
     """Convert rig ID (`'NP.1'`) to valid rig index (`1`).
     
     >>> rig_idx('NP.1')
@@ -125,9 +134,11 @@ def rig_idx(id: str) -> Literal[0,1,2,3,4] | None:
     >>> rig_idx(1)
     1
     """
-    valid_idx = (0,1,2,3,4)
-    with contextlib.suppress(ValueError):
-        result = int(id) # if idx already provided
+    if id is None:
+        return None
+    valid_idx = (0, 1, 2, 3, 4)
+    with contextlib.suppress(Exception):
+        result = int(str(id))  # if idx provided instead of id
         if result in valid_idx:
             return result
     result = re.findall(fr"NP\.?([\d]+)", id.upper())
