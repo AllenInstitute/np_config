@@ -12,12 +12,12 @@ file_config: dict[str, Any] = np_config.from_file('local_config.yaml')
 ```python
 rig = np_config.Rig()
 
-name: str = rig.id                      # "NP.1"
-index: int = rig.idx                    # 1
+name: str = rig.id                            # "NP.1"
+index: int = rig.idx                          # 1
 
-acquisition_pc_hostname: str = rig.acq      # "W10DT713843"
-config: dict[str, str | int] = rig.config   # specific to NP.1
-paths: dict[str, pathlib.Path] = rig.paths  # using values from rig.config
+acquisition_pc_hostname: str = rig.acq        # "W10DT713843"
+config: dict[str, str | int] = rig.config     # specific to NP.1
+paths: dict[str, pathlib.Path] = rig.paths    # using values from rig.config
 
 ```
 
