@@ -1,6 +1,5 @@
 import contextlib
 import dataclasses
-import logging.config
 import os
 import pathlib
 import random
@@ -9,8 +8,6 @@ from typing import Dict, Mapping
 import pytest
 
 import np_config
-
-logging.config.dictConfig(np_config.fetch("/np_defaults/logging"))
 
 key = "test"
 known_zk_keys = ("/mpe_defaults/logging", "/mpe_defaults/configuration")
