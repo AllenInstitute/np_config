@@ -7,7 +7,6 @@ import datetime
 import itertools
 import json
 import logging
-import logging.config
 import pathlib
 import platform
 import subprocess
@@ -21,8 +20,8 @@ from kazoo.client import KazooClient
 
 # TODO use local backup for ZK if server unavailable
 
+logging.getLogger('kazoo.client').setLevel('WARNING')
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 # preserve order of keys in dict
 yaml.add_representer(
