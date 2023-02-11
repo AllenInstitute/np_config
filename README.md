@@ -33,5 +33,3 @@ np1_mvr_data_root: pathlib.Path = np.paths['MVR']
 - configs can be added via ZooNavigator webview:
   [http://eng-mindscope:8081](http://eng-mindscope:8081)
 - or more conveniently, via an extension for VSCode such as [gaoliang.visual-zookeeper](https://marketplace.visualstudio.com/items?itemName=gaoliang.visual-zookeeper)
-
-- configs are cached locally: if the ZooKeeper server is unavailable, the local copy will be used
