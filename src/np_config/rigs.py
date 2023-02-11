@@ -56,12 +56,8 @@ from typing import Any, Hashable, Optional
 
 import requests
 
-if __name__ == "__main__":
-    import utils
-
-    import np_config
-else:
-    from . import np_config, utils
+import np_config.np_config as np_config
+import np_config.utils as utils
 
 logger = logging.getLogger(__name__)
 
