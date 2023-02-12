@@ -27,6 +27,7 @@ pyyaml = ">= 5, <7"
 typing-extensions = ">= 4"
 appdirs = "^1"
 requests = "^2"
+"backports.cached-property" = "*"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"

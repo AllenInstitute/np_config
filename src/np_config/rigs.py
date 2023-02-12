@@ -47,13 +47,13 @@ from __future__ import annotations
 
 import contextlib
 import doctest
-import functools
 import logging
 import os
 import pathlib
 import re
 from typing import Any, Hashable, Optional
 
+from backports.cached_property import cached_property
 import requests
 
 import np_config.np_config as np_config
@@ -206,7 +206,7 @@ class Rig:
 
     STIM = Stim = stim
 
-    @functools.cached_property
+    @cached_property
     def config(self) -> dict[Hashable, Any]:
         "Rig-specific config dict, fetched from ZooKeeper."
         return utils.merge(
@@ -214,7 +214,7 @@ class Rig:
             np_config.from_zk(f"/rigs/{self.id}"),
         )
 
-    @functools.cached_property
+    @cached_property
     def paths(self) -> dict[str, pathlib.Path]:
         """Network paths to data folders for various devices/services, using 
         values from ZooKeeper /np_defaults/configuration and /rigs/NP.<idx>/paths.
