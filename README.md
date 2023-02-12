@@ -1,9 +1,8 @@
 # np_config
 
 
-***
-
 **For use on internal Allen Institute network**
+
 
 ***
 
