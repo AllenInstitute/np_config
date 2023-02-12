@@ -1,8 +1,5 @@
-[project]
-name = "np_config"
-
 [tool.poetry]
-name = "np_config"
+name = "np-config"
 version = "0.4.12"
 description = "Config fetching from file or Zookeeper - with local backup - repackaging code from AIBS mpeconfig."
 authors = [
