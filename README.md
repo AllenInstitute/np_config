@@ -8,6 +8,8 @@
 Fetch configs from ZooKeeper nodes or .yaml/.json files:
 
 ```python
+import np_config
+
 zk_config: dict[str, str | int] = np_config.from_zk('/rigs/NP.1')
 
 file_config: dict[str, Any] = np_config.from_file('local_config.yaml')
