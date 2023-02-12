@@ -1,10 +1,8 @@
 # np_config
 
 
-**For use on internal Allen Institute network**
+### *For use on internal Allen Institute network*
 
-
-***
 
 
 Fetch configs from ZooKeeper nodes or .yaml/.json files:
