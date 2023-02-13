@@ -37,6 +37,8 @@ pip-tools = "*"
 isort = "*"
 black = "*"
 pytest = "*"
+coverage = {extras = ["toml"], version = "^7.1.0"}
+pytest-cov = "^4.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -46,8 +48,8 @@ build-backend = "poetry.core.masonry.api"
 addopts = [
     "--import-mode=importlib",
     "--doctest-modules",
-    "--pdb",
-    "--pdbcls=IPython.terminal.debugger:TerminalPdb",
+    # "--pdb",
+    # "--pdbcls=IPython.terminal.debugger:TerminalPdb",
 ]
 doctest_optionflags = [
     "NORMALIZE_WHITESPACE",
@@ -58,3 +60,13 @@ testpaths = [
     "tests",
     "src",
 ]
+
+[tool.coverage.paths]
+source = ["src"]
+
+[tool.coverage.run]
+branch = true
+source = ["np_config"]
+
+[tool.coverage.report]
+show_missing = true
