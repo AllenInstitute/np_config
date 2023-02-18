@@ -25,7 +25,7 @@ def merge(
     """
     Utility function to do a deep merge on dictionaries. `base` will be modified, so deep
     copy first if the original needs to be preserved. This is a recursive function, so
-    it merges nested dicts. If a value isn't a dict in both `base` and `merge` the
+    it merges nested dicts. If a value isn't a dict in both `base` and `update` the
     values won't be merged: the value from `update` will override that of `base`.
     
     From mpeconfig.
