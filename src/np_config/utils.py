@@ -100,20 +100,24 @@ def normalize_path(path: str | pathlib.Path) -> pathlib.Path:
 
 
 def local_or_unc_path(host: str, path: str | pathlib.Path) -> pathlib.Path:
-    "Convert a UNC path to a local path if running on the host computer specified in the UNC path."
+    """Get a path that works from a location on the host computer. 
+    
+    - converts a UNC path to a local path if running on the host computer specified in the
+    UNC path.
+    - converts a local path to a UNC path if running on a different computer.
+    """
     if HOSTNAME == host:
         with contextlib.suppress(ValueError):
             _ = unc_to_local(path)
             if _.exists():
                 return _
-        for attempt in (
-            pathlib.Path(path),
-            pathlib.Path(str(path).replace("$", ":")),
-        ):
-            normalized = normalize_path(attempt)
-            if not normalized.exists():
-                logger.warning("Path not found in local filesystem: %s", path)
-            return normalized
+        # otherwise path is not unc
+        normalized = normalize_path(
+            pathlib.Path(str(path).replace("$", ":"))
+        )
+        if not normalized.exists():
+            logger.warning("Path not found in local filesystem: %s", path)
+        return normalized
 
     if host not in str(path):
         return local_to_unc(host, path)
