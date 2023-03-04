@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import datetime
 import doctest
 import logging
 import os
@@ -11,6 +12,7 @@ import sys
 from typing import Any, Hashable, Mapping, MutableMapping, TypeVar
 
 from typing_extensions import Literal
+from singledispatch import singledispatch
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +155,51 @@ def rig_idx(id: str | None) -> Literal[0, 1, 2, 3, 4] | None:
         return None
     return result
 
+
+PLATFORM_JSON_TIME_FMT = "%Y%m%d%H%M%S"
+
+@singledispatch
+def normalize_time(t: str | float | int | datetime.datetime) -> str: 
+    """
+    A standard time format matching platform JSON files.
+    
+    >>> normalize_time(datetime.datetime(2023, 2, 14, 13, 30, 00))
+    '20230214133000'
+    >>> normalize_time(1676410200.0)
+    '20230214133000'
+    >>> normalize_time(1676410200)
+    '20230214133000'
+    >>> normalize_time('1676410200.0')
+    '20230214133000'
+    >>> normalize_time('1676410200')
+    '20230214133000'
+    >>> normalize_time('2023-02-14T13:30:00')
+    '20230214133000'
+    """
+    return _
+    
+@normalize_time.register
+def _(t: datetime.datetime) -> str:
+    return t.strftime(PLATFORM_JSON_TIME_FMT)
+
+@normalize_time.register
+def _(t: float) -> str:
+    return datetime.datetime.fromtimestamp(t).strftime(PLATFORM_JSON_TIME_FMT)
+
+@normalize_time.register
+def _(t: int) -> str:
+    # can't use int | float because of future.__annotations__
+    return datetime.datetime.fromtimestamp(t).strftime(PLATFORM_JSON_TIME_FMT)
+
+@normalize_time.register
+def _(t: str) -> str:
+    if len(t) == 14: # already in correct format
+        return datetime.datetime(int(t[:4]), *(int(t[_:_+2]) for _ in range(4, 14, 2))).strftime(PLATFORM_JSON_TIME_FMT)
+    with contextlib.suppress(ValueError):
+        return datetime.datetime.fromtimestamp(float(t)).strftime(PLATFORM_JSON_TIME_FMT)
+    with contextlib.suppress(ValueError):
+        return datetime.datetime.fromisoformat(t).strftime(PLATFORM_JSON_TIME_FMT) 
+    raise ValueError(f"Unable to parse time: {t}")
 
 if __name__ == "__main__":
     doctest.testmod()

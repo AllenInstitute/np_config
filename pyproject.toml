@@ -28,6 +28,8 @@ typing-extensions = ">= 4"
 appdirs = "^1"
 requests = "^2"
 "backports.cached-property" = "*"
+singledispatch = "^4.0.0"
+types-singledispatch = "^4.0.0.1"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"
