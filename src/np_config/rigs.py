@@ -56,7 +56,7 @@ from typing import Any, Hashable, Optional
 from backports.cached_property import cached_property
 import requests
 
-import np_config.np_config as np_config
+import np_config.config as config
 import np_config.utils as utils
 
 logger = logging.getLogger(__name__)
@@ -210,30 +210,31 @@ class Rig:
     def config(self) -> dict[Hashable, Any]:
         "Rig-specific config dict, fetched from ZooKeeper."
         return utils.merge(
-            np_config.from_zk("/np_defaults/configuration"),
-            np_config.from_zk(f"/rigs/{self.id}"),
+            config.from_zk("/np_defaults/configuration"),
+            config.from_zk(f"/rigs/{self.id}"),
         )
 
-    @cached_property
+    @property
     def paths(self) -> dict[str, pathlib.Path]:
         """Network paths to data folders for various devices/services, using 
-        values from ZooKeeper /np_defaults/configuration and /rigs/NP.<idx>/paths.
+        values from ZooKeeper /np_defaults/configuration and
+        /rigs/NP.<idx>/paths.
+        
+        >>> Rig(1).paths['acq']
         """
         paths = dict()
 
         for service, service_config in self.config["services"].items():
             if "data" not in service_config:
                 continue
-            data = service_config["data"]
-            host = getattr(self, service, service_config.get("host", None))
-            if not host:
-                continue
+            data_path = service_config["data"]
+            host = getattr(self, service_config.get("comp"), None) or service_config["host"]
             if host in RIG_ID_TO_HOSTNAMES[self.id]:
                 paths[str(service)] = utils.local_or_unc_path(
                     host=host, path=service_config["data"]
                 )
             else:
-                paths[str(service)] = utils.normalize_path(f"//{host}/{data}")
+                paths[str(service)] = utils.normalize_path(f"//{host}/{data_path}")
         for name, path in self.config.get("paths", {}).items():
             paths[str(name)] = utils.normalize_path(path)
 

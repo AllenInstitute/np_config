@@ -86,7 +86,6 @@ def cleanup_zk_records() -> None:
                 logger.debug(
                     f"Removing un-changed zk record: {pair[0].stem.split('.')[0]}"
                 )
-                pair[0].unlink()
             break  # only compare against the next most recent record
 
 
