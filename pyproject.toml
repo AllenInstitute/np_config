@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "np-config"
-version = "0.4.17"
+version = "0.4.22"
 description = "Config fetching from file or Zookeeper - with local backup - repackaging code from AIBS mpeconfig."
 authors = [
     "Ben Hardcastle <ben.hardcastle@alleninstitute.org>",
