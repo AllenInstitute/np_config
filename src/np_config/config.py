@@ -12,7 +12,7 @@ import platform
 import subprocess
 import sys
 import threading
-from typing import Any, Generator, Hashable, Mapping
+from typing import Any, Generator, Mapping
 
 import appdirs
 import yaml
@@ -94,13 +94,13 @@ def cleanup_zk_records() -> None:
 atexit.register(cleanup_zk_records)
 
 
-def from_zk(path: str, **kwargs) -> dict[Hashable, Any]:
+def from_zk(path: str, **kwargs) -> dict[Any, Any]:
     "Access eng-mindscope Zookeeper, return config dict."
     with recorded_zk_config(**kwargs) as zk:
         return zk[path]
 
 
-def from_file(file: pathlib.Path) -> dict[Hashable, Any]:
+def from_file(file: pathlib.Path) -> dict[Any, Any]:
     "Read file (yaml or json), return dict."
     file = pathlib.Path(file)
     with file.open("r") as f:
@@ -124,7 +124,7 @@ def normalize_zk_path(path: str) -> str:
     return path
 
 
-def fetch(arg: str | Mapping | pathlib.Path, **kwargs) -> dict[Hashable, Any]:
+def fetch(arg: str | Mapping | pathlib.Path, **kwargs) -> dict[Any, Any]:
     "Differentiate a file path from a ZK path and return corresponding dict."
 
     if isinstance(arg, Mapping):

@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 HOSTNAME = socket.gethostname().upper()
 
-T = TypeVar("T", bound=MutableMapping[Hashable, Any])
+MutableMappingType = TypeVar("MutableMappingType", bound=MutableMapping)
 
 
 def merge(
-    base: MutableMapping[Hashable, Any], update: Mapping[Hashable, Any]
-) -> MutableMapping[Hashable, Any]:
+    base: MutableMappingType, update: Mapping
+) -> MutableMappingType:
     """
     Utility function to do a deep merge on dictionaries. `base` will be modified, so deep
     copy first if the original needs to be preserved. This is a recursive function, so
