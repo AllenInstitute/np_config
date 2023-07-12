@@ -96,7 +96,7 @@ atexit.register(cleanup_zk_records)
 
 def from_zk(path: str, **kwargs) -> dict[Any, Any]:
     "Access eng-mindscope Zookeeper, return config dict."
-    with recorded_zk_config(**kwargs) as zk:
+    with ConfigZK(**kwargs) as zk:
         return zk[path]
 
 
@@ -229,16 +229,13 @@ class ConfigFile(collections.UserDict):
         if not self.file.exists():
             self.file.parent.mkdir(parents=True, exist_ok=True)
             self.file.touch(exist_ok=True)
-        with self.lock:
-            try:
-                to_file(self.data, self.file)
-            except OSError:
-                logger.debug(
-                    f"Could not update local config file {self.file}", exc_info=True,
-                )
-                pass
-            else:
-                logger.debug(f"Updated local config file {self.file}")
+        with self.lock, contextlib.suppress(Exception):
+            to_file(self.data, self.file)
+            logger.debug(f"Updated local config file {self.file}")
+            return
+        logger.debug(
+            f"Could not update local config file {self.file}", exc_info=True,
+        )
 
     def __getitem__(self, key: Any):
         logger.debug(f"Fetching {key!r} from local config backup")
