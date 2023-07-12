@@ -220,7 +220,8 @@ class Rig:
         values from ZooKeeper /np_defaults/configuration and
         /rigs/NP.<idx>/paths.
         
-        >>> Rig(1).paths['acq']
+        >>> Rig(1).paths['Sync'].as_posix()
+        '//W10DTSM18306/c$/ProgramData/AIBS_MPE/sync/data'
         """
         paths = dict()
 
