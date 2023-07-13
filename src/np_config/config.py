@@ -323,7 +323,7 @@ class ConfigZK(KazooClient):
         if self.connected:
             return self
         try:
-            self.start(timeout=1)
+            self.start(timeout=10)
         except Exception as exc:
             if not is_connected():
                 logger.debug(
