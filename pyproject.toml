@@ -25,11 +25,11 @@ python = "^3.7"
 kazoo = "~2.8"
 pyyaml = ">= 5, <7"
 typing-extensions = ">= 4"
-appdirs = "^1"
 requests = "^2"
 "backports.cached-property" = "*"
 singledispatch = "^4.0.0"
 types-singledispatch = "^4.0.0.1"
+platformdirs = "^3.11.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"
@@ -72,46 +72,3 @@ source = ["np_config"]
 
 [tool.coverage.report]
 show_missing = true
-[project]
-authors = [
-    {name = "Ben Hardcastle", email = "ben.hardcastle@alleninstitute.org"},
-    {name = "Ross Hytnen", email = "rossh@alleninstitute.org"},
-    {name = "Ben Sutton", email = "ben.sutton@alleninstitute.org"},
-]
-maintainers = [
-    {name = "Ben Hardcastle", email = "ben.hardcastle@alleninstitute.org"},
-]
-requires-python = ">=3.7,<4.0"
-dependencies = [
-    "kazoo~=2.8",
-    "pyyaml<7,>=5",
-    "typing-extensions>=4",
-    "requests<3,>=2",
-    "backports-cached-property",
-    "singledispatch<5.0.0,>=4.0.0",
-    "types-singledispatch<5.0.0.0,>=4.0.0.1",
-    "platformdirs>=3.11.0",
-]
-name = "np-config"
-version = "0.4.25"
-description = "Config fetching from file or Zookeeper - with local backup - repackaging code from AIBS mpeconfig."
-readme = "README.md"
-classifiers = ["Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent"]
-
-[project.urls]
-Repository = "https://github.com/alleninstitute/np_config"
-"Bug Tracker" = "https://github.com/alleninstitute/np_config/issues"
-
-[project.group.dev.dependencies]
-mypy = "*"
-types-PyYaml = "*"
-types-requests = "*"
-pip-tools = "*"
-isort = "*"
-black = "*"
-pytest = "*"
-pytest-cov = "^4.0.0"
-
-[project.group.dev.dependencies.coverage]
-extras = ["toml"]
-version = "^7.1.0"
