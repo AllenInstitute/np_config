@@ -3,7 +3,7 @@
 
 ### *For use on internal Allen Institute network*
 
-
+## Usage
 
 Fetch configs from ZooKeeper nodes or .yaml/.json files:
 
@@ -48,3 +48,16 @@ np1_mvr_data_root: pathlib.Path = np.paths['MVR']
 - configs can be added via ZooNavigator webview:
   [http://eng-mindscope:8081](http://eng-mindscope:8081)
 - or more conveniently, via an extension for VSCode such as [gaoliang.visual-zookeeper](https://marketplace.visualstudio.com/items?itemName=gaoliang.visual-zookeeper)
+
+## Development
+Initialize for local development
+
+```bash
+poetry install --with dev
+```
+
+Run the tests
+
+```bash
+poetry run pytest
+```

@@ -14,7 +14,7 @@ import sys
 import threading
 from typing import Any, Generator, Mapping
 
-import appdirs
+import platformdirs
 import yaml
 from kazoo.client import KazooClient
 
@@ -35,8 +35,7 @@ ZK_HOST_PORT: str = "eng-mindscope:2181"
 MINDSCOPE_SERVER: str = "eng-mindscope.corp.alleninstitute.org"
 
 ROOT_DIR: pathlib.Path = pathlib.Path(__file__).absolute().parent.parent
-LOCAL_DATA_DIR = pathlib.Path(appdirs.site_data_dir("np_config", "np"))
-
+LOCAL_DATA_DIR = pathlib.Path(platformdirs.user_data_dir("np_config", "np"))
 LOCAL_ZK_BACKUP_FILE = LOCAL_DATA_DIR / "zk_backup.yaml"
 "File for keeping a full backup of Zookeeper configs."
 
