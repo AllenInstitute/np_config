@@ -222,6 +222,7 @@ class Rig:
         
         >>> Rig(1).paths['Sync'].as_posix()
         '//W10DTSM18306/c$/ProgramData/AIBS_MPE/sync/data'
+        >>> raise Exception("bur")
         """
         paths = dict()
 
@@ -240,6 +241,14 @@ class Rig:
             paths[str(name)] = utils.normalize_path(path)
 
         return paths
+
+    # @property
+    # def mvr_config(self) -> pathlib.Path:
+    #     "Path to MVR config file for this rig."
+    #     return self.paths["MVR"] / "config.json"
+    
+    # @property
+    # def 
 
 
 RIG_CONFIG: dict[Hashable, Any] | None = Rig().config if RIG_IDX else None
