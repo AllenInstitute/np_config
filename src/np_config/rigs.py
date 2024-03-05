@@ -241,6 +241,27 @@ class Rig:
 
         return paths
 
+    @property
+    def mvr_config(self) -> pathlib.Path:
+        "Path to MVR config file for this rig."
+        return utils.normalize_path(
+            f"//{self.mon}/ProgramData/AIBS_MPE/mvr/config/mvr.ini"
+        )
+    
+    @property
+    def sync_config(self) -> pathlib.Path:
+        "Path to sync config file for this rig."
+        return utils.normalize_path(
+            f'//{self.sync}/ProgramData/AIBS_MPE/sync/config/sync.yml'
+        )
+
+    @property
+    def camstim_config(self) -> pathlib.Path:
+        "Path to camstim config file for this rig."
+        return utils.normalize_path(
+            f'//{self.stim}/ProgramData/AIBS_MPE/camstim/config/camstim.yml'
+        )
+
 
 RIG_CONFIG: dict[Hashable, Any] | None = Rig().config if RIG_IDX else None
 "Rig-specific config dict, fetched from ZooKeeper, or `None` if not running on a rig."
