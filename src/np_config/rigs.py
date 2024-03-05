@@ -222,7 +222,6 @@ class Rig:
         
         >>> Rig(1).paths['Sync'].as_posix()
         '//W10DTSM18306/c$/ProgramData/AIBS_MPE/sync/data'
-        >>> raise Exception("bur")
         """
         paths = dict()
 
