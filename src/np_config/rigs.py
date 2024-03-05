@@ -255,6 +255,13 @@ class Rig:
             f'//{self.sync}/ProgramData/AIBS_MPE/sync/config/sync.yml'
         )
 
+    @property
+    def camstim_config(self) -> pathlib.Path:
+        "Path to camstim config file for this rig."
+        return utils.normalize_path(
+            f'//{self.stim}/ProgramData/AIBS_MPE/camstim/config/camstim.yml'
+        )
+
 
 RIG_CONFIG: dict[Hashable, Any] | None = Rig().config if RIG_IDX else None
 "Rig-specific config dict, fetched from ZooKeeper, or `None` if not running on a rig."
