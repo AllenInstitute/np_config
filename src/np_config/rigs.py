@@ -242,13 +242,19 @@ class Rig:
 
         return paths
 
-    # @property
-    # def mvr_config(self) -> pathlib.Path:
-    #     "Path to MVR config file for this rig."
-    #     return self.paths["MVR"] / "config.json"
+    @property
+    def mvr_config(self) -> pathlib.Path:
+        "Path to MVR config file for this rig."
+        return utils.normalize_path(
+            f"//{self.mon}/ProgramData/AIBS_MPE/mvr/config/mvr.ini"
+        )
     
-    # @property
-    # def 
+    @property
+    def sync_config(self) -> pathlib.Path:
+        "Path to sync config file for this rig."
+        return utils.normalize_path(
+            f'//{self.sync}/ProgramData/AIBS_MPE/sync/config/sync.yml'
+        )
 
 
 RIG_CONFIG: dict[Hashable, Any] | None = Rig().config if RIG_IDX else None
