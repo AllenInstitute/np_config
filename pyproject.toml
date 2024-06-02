@@ -33,6 +33,10 @@ Repository = "https://github.com/alleninstitute/np_config"
 "Bug Tracker" = "https://github.com/alleninstitute/np_config/issues"
 
 [tool.pdm]
+plugins = [
+    "pdm-bump",
+]
+
 [tool.pdm.dev-dependencies]
 dev = [
     "mypy",
@@ -47,10 +51,15 @@ dev = [
 ]
 
 [tool.pdm.build]
-includes = ["src/np_config"]
-[build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+
+[tool.pdm.scripts]
+pre_build = "pdm run bumpver"
+
+[tool.pdm.scripts.bumpver]
+composite = [
+    "pdm self add pdm-bump",
+    "pdm bump micro",
+]
 
 [tool.pytest.ini_options]
 addopts = [
