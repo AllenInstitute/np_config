@@ -4,7 +4,7 @@
 ### When running on a rig-attached computer
 
 AIBS MPE computer and rig IDs:
->>> COMP_ID, RIG_ID, RIG_IDX        # doctest: +SKIP
+>>> COMP_ID, get_rig_id(), get_rig_idx()        # doctest: +SKIP
 'NP.1-Acq', 'NP.1', 1
 
 
@@ -20,18 +20,15 @@ Hostnames for each rig computer [Sync, Mon, Acq, Stim]:
 
 Paths for specific apps running on a rig:
 >>> Rig(1).paths['MVR'].as_posix()
-'//W10DTSM18278/c$/ProgramData/AIBS_MPE/mvr/data'
+'//W10DTSM118295/c$/ProgramData/AIBS_MPE/mvr/data'
 
 Config dict for a particular rig, fetched from ZooKeeper /rigs/NP.<idx>:
->>> Rig(1).config['Acq']
-'W10DT713843'
+>>> Rig(1).config['pretest_mouse']        
+599657
 
 When running on a rig, its NP-index is obtained from an env var, making the current rig's
 properties available by default:
 >>> Rig().Acq                       # doctest: +SKIP 
-'W10DT713843'
-
->>> Rig().config['Acq']             # doctest: +SKIP
 'W10DT713843'
 
 If app is running on the local computer, its path is represented as a local path:
@@ -45,16 +42,16 @@ WindowsPath('//W10DT713942/c$/ProgramData/AIBS_MPE/camstim/data')
 """
 from __future__ import annotations
 
-import contextlib
 import doctest
+import functools
 import logging
 import os
 import pathlib
-import re
 from typing import Any, Hashable, Optional
 
-from backports.cached_property import cached_property
 import requests
+from backports.cached_property import cached_property
+from typing_extensions import Literal
 
 import np_config.config as config
 import np_config.utils as utils
@@ -65,62 +62,69 @@ logger = logging.getLogger(__name__)
 
 SERVER = "http://mpe-computers/v2.0"
 
-comp_ids, rig_ids, cluster_ids = requests.get(SERVER).json().values()
+
+@functools.cache
+def get_mpe_computer_ids(key: Literal['comp_ids', 'rig_ids', 'cluster_ids'] | None = None) -> dict[str, Any]:
+    """Get a mapping of computer/rig/cluster IDs and their corresponding information."""
+    all_ids = requests.get(SERVER).json()
+    if key:
+        return all_ids[key]
+    return all_ids
+
+get_comp_ids = functools.partial(get_mpe_computer_ids, "comp_ids")
+get_rig_ids = functools.partial(get_mpe_computer_ids, "rig_ids")
+get_cluster_ids = functools.partial(get_mpe_computer_ids, "cluster_ids")
 
 # make mappings for easier lookup
-RIG_ID_TO_COMP_IDS: dict[str, list[str]] = {
-    k: v.get("comp_ids", []) for k, v in rig_ids.items()
-}
-"Keys are rig IDs (`NP.1`), values are lists of computer IDs (`['NP.1-Acq', ...]`)."
+def get_id_to_comp_ids() -> dict[str, list[str]]:
+    "Keys are rig IDs (`NP.1`), values are lists of computer IDs (`['NP.1-Acq', ...]`)."
+    return {k: v.get("comp_ids", []) for k, v in get_rig_ids().items()}
 
-COMP_ID_TO_HOSTNAME: dict[str, str] = {
-    k: v.get("hostname", "").upper() for k, v in comp_ids.items()
-}
-"Keys are computer IDs (`NP.1-Acq`), values are hostnames (`W10DT713843`)."
+def get_comp_id_to_hostname() -> dict[str, str]:
+    "Keys are computer IDs (`NP.1-Acq`), values are hostnames (`W10DT713843`)."
+    return {k: v.get("hostname", "").upper() for k, v in get_comp_ids().items()}
 
-HOSTNAME_TO_COMP_ID: dict[str, str] = {
-    v.upper(): k for k, v in COMP_ID_TO_HOSTNAME.items()
-}
-"Keys are hostnames (`W10DT713843`), values are computer IDs (`NP.1-Acq`)."
+def get_hostname_to_comp_id() -> dict[str, str]:
+    "Keys are hostnames (`W10DT713843`), values are computer IDs (`NP.1-Acq`)."
+    return {v.upper(): k for k, v in get_comp_id_to_hostname().items()}
 
-RIG_ID_TO_HOSTNAMES: dict[str, list[str]] = {
-    k: [COMP_ID_TO_HOSTNAME[comp_id] for comp_id in v]
-    for k, v in RIG_ID_TO_COMP_IDS.items()
-}
-"Keys are rig IDs (`NP.1`), values are lists of hostnames (`['W10DT713843', ...]`)."
+def get_rig_id_to_hostnames() -> dict[str, list[str]]:
+    "Keys are rig IDs (`NP.1`), values are lists of hostnames (`['W10DT713843', ...]`)."
+    return {k: [get_comp_id_to_hostname()[comp_id] for comp_id in v] for k, v in get_id_to_comp_ids().items()}
 
 # local computer properties ------------------------------------------------------------
 
-HOSTNAME = utils.HOSTNAME
+@functools.cache
+def get_comp_id() -> str | None:
+    "AIBS MPE comp ID for this computer, e.g. `NP.1-Sync`."
+    return get_hostname_to_comp_id().get(utils.HOSTNAME) or os.environ.get("AIBS_COMP_ID") or None
 
-COMP_ID: str | None = (
-    HOSTNAME_TO_COMP_ID.get(HOSTNAME) or os.environ.get("AIBS_COMP_ID") or None
-)
-"AIBS MPE comp ID for this computer, e.g. `NP.1-Sync`."
-
-RIG_ID: str | None = (
-    os.environ.get("AIBS_RIG_ID", "").upper()
-    or comp_ids.get(COMP_ID, {}).get("rig_id")
-    or (
-        f"NP.{utils.rig_idx(COMP_ID)}"
-        if COMP_ID and utils.rig_idx(COMP_ID) is not None
-        else None
+@functools.cache
+def get_rig_id() -> str | None:
+    "AIBS MPE NP-rig ID, e.g. `'NP.1'` if running on a computer connected to NP.1."
+    return (
+        os.environ.get("AIBS_RIG_ID", "").upper()
+        or get_comp_ids().get(get_comp_id(), {}).get("rig_id")
+        or (
+            f"NP.{utils.rig_idx(get_comp_id())}"
+            if get_comp_id() and utils.rig_idx(get_comp_id()) is not None
+            else None
+        )
+        or ("BTVTest.1" if os.environ.get("USE_TEST_RIG", False) else None)
+        or None
     )
-    or ("BTVTest.1" if os.environ.get("USE_TEST_RIG", False) else None)
-    or None
-)
-"AIBS MPE NP-rig ID, e.g. `'NP.1'` if running on a computer connected to NP.1."
 
-RIG_IDX: int | None = utils.rig_idx(RIG_ID)
-"AIBS MPE NP-rig index, e.g. `1` if running on a computer connected to NP.1."
+def get_rig_idx() -> int | None:
+    "AIBS MPE NP-rig index, e.g. `1` if running on a computer connected to NP.1."
+    return utils.rig_idx(get_rig_id())
 
-if not RIG_ID:
+if not get_rig_id():
     logger.debug(
         "Not running from an NP rig: connections to services won't be made. To use BTVTest.1, set env var `USE_TEST_RIG = 1`"
     )
 
 logger.info(
-    f"Running from {COMP_ID or HOSTNAME}, {'connected to ' + RIG_ID if RIG_ID else 'not connected to a rig'}"
+    f"Running from {get_comp_id() or utils.HOSTNAME}, {'connected to ' + get_rig_id() if get_rig_id() else 'not connected to a rig'}"
 )
 
 
@@ -137,11 +141,11 @@ class Rig:
     'W10DT713843'
 
     Config dict for a particular rig, fetched from ZooKeeper /rigs/NP.<idx>:
-    >>> Rig(1).config['Acq']
-    'W10DT713843'
+    >>> Rig(1).config['pretest_mouse']
+    599657
 
     When running on a rig, its NP-index is obtained from an env var, making the current rig's
-    properties available by default (equivalent to `Rig(RIG_IDX)`):
+    properties available by default (equivalent to `Rig(get_rig_idx())`):
     >>> Rig().Acq                       # doctest: +SKIP 
     'W10DT713843'
 
@@ -161,16 +165,16 @@ class Rig:
     _acq: str
 
     def __init__(self, idx_or_id: Optional[int | str] = None):
-        idx_or_name = RIG_IDX if idx_or_id is None else idx_or_id
+        idx_or_name = get_rig_idx() if idx_or_id is None else idx_or_id
         if idx_or_name is None:
             raise ValueError("Rig index not specified and not running on a rig.")
-        idx = utils.rig_idx(idx_or_name)
+        idx = utils.rig_idx(str(idx_or_name))
         if idx is None:
             raise ValueError(f"`NP.{idx}` is not a recognized NP-rig")
         self.idx: int = idx
         self.id: str = f"NP.{idx}"
         for comp in ("sync", "stim", "mon", "acq"):
-            setattr(self, f"_{comp}", COMP_ID_TO_HOSTNAME[f"{self.id}-{comp.title()}"])
+            setattr(self, f"_{comp}", get_comp_id_to_hostname()[f"{self.id}-{comp.title()}"])
 
     def __str__(self) -> str:
         return self.id
@@ -221,7 +225,7 @@ class Rig:
         /rigs/NP.<idx>/paths.
         
         >>> Rig(1).paths['Sync'].as_posix()
-        '//W10DTSM18306/c$/ProgramData/AIBS_MPE/sync/data'
+        '//W10DT26AD0025/c$/ProgramData/AIBS_MPE/sync/data'
         """
         paths = dict()
 
@@ -230,7 +234,7 @@ class Rig:
                 continue
             data_path = service_config["data"]
             host = getattr(self, service_config.get("comp"), None) or service_config["host"]
-            if host in RIG_ID_TO_HOSTNAMES[self.id]:
+            if host in get_rig_id_to_hostnames()[self.id]:
                 paths[str(service)] = utils.local_or_unc_path(
                     host=host, path=service_config["data"]
                 )
@@ -262,9 +266,18 @@ class Rig:
             f'//{self.stim}/c$/ProgramData/AIBS_MPE/camstim/config/camstim.yml'
         )
 
+def get_rig_config(idx_or_id: Optional[int | str] = None) -> dict[Hashable, Any] | None:
+    """Get the rig-specific config dict for the specified rig index or ID, fetched
+    from ZooKeeper. If no index or ID is provided, returns the config dict for the
+    current rig, if running on an NP rig.
+    
+    >>> get_rig_config(1)['pretest_mouse']
+    599657
+    """
+    if idx_or_id is None:
+        return Rig().config if get_rig_idx() else None
+    return Rig(idx_or_id).config
 
-RIG_CONFIG: dict[Hashable, Any] | None = Rig().config if RIG_IDX else None
-"Rig-specific config dict, fetched from ZooKeeper, or `None` if not running on a rig."
 
 if __name__ == "__main__":
     doctest.testmod()
