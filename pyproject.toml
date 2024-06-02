@@ -1,14 +1,14 @@
 [project]
 name = "np-config"
-version = "0.4.27"
+version = "0.4.29"
 description = "Config fetching from file or Zookeeper - with local backup - repackaging code from AIBS mpeconfig."
 authors = [
-    {name = "Ben Hardcastle", email = "ben.hardcastle@alleninstitute.org"},
-    {name = "Ross Hytnen", email = "rossh@alleninstitute.org"},
-    {name = "Ben Sutton", email = "ben.sutton@alleninstitute.org"},
+    { name = "Ben Hardcastle", email = "ben.hardcastle@alleninstitute.org" },
+    { name = "Ross Hytnen", email = "rossh@alleninstitute.org" },
+    { name = "Ben Sutton", email = "ben.sutton@alleninstitute.org" },
 ]
 maintainers = [
-    {name = "Ben Hardcastle", email = "ben.hardcastle@alleninstitute.org"},
+    { name = "Ben Hardcastle", email = "ben.hardcastle@alleninstitute.org" },
 ]
 readme = "README.md"
 classifiers = [
@@ -51,6 +51,9 @@ dev = [
 ]
 
 [tool.pdm.build]
+includes = [
+    "src/np_config",
+]
 
 [tool.pdm.scripts]
 pre_build = "pdm run bumpver"
@@ -65,8 +68,6 @@ composite = [
 addopts = [
     "--import-mode=importlib",
     "--doctest-modules",
-    # "--pdb",
-    # "--pdbcls=IPython.terminal.debugger:TerminalPdb",
 ]
 doctest_optionflags = [
     "NORMALIZE_WHITESPACE",
@@ -79,11 +80,21 @@ testpaths = [
 ]
 
 [tool.coverage.paths]
-source = ["src"]
+source = [
+    "src",
+]
 
 [tool.coverage.run]
 branch = true
-source = ["np_config"]
+source = [
+    "np_config",
+]
 
 [tool.coverage.report]
 show_missing = true
+
+[build-system]
+requires = [
+    "pdm-backend",
+]
+build-backend = "pdm.backend"
