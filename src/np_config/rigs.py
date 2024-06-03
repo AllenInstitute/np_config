@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
 SERVER = "http://mpe-computers/v2.0"
 
 
-@functools.cache
+@functools.lru_cache(maxsize=None)
 def get_mpe_computer_ids(key: Literal['comp_ids', 'rig_ids', 'cluster_ids'] | None = None) -> dict[str, Any]:
     """Get a mapping of computer/rig/cluster IDs and their corresponding information."""
     all_ids = requests.get(SERVER).json()
@@ -94,12 +94,12 @@ def get_rig_id_to_hostnames() -> dict[str, list[str]]:
 
 # local computer properties ------------------------------------------------------------
 
-@functools.cache
+@functools.lru_cache(maxsize=None)
 def get_comp_id() -> str | None:
     "AIBS MPE comp ID for this computer, e.g. `NP.1-Sync`."
     return get_hostname_to_comp_id().get(utils.HOSTNAME) or os.environ.get("AIBS_COMP_ID") or None
 
-@functools.cache
+@functools.lru_cache(maxsize=None)
 def get_rig_id() -> str | None:
     "AIBS MPE NP-rig ID, e.g. `'NP.1'` if running on a computer connected to NP.1."
     return (
