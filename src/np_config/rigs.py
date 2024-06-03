@@ -118,16 +118,6 @@ def get_rig_idx() -> int | None:
     "AIBS MPE NP-rig index, e.g. `1` if running on a computer connected to NP.1."
     return utils.rig_idx(get_rig_id())
 
-if not get_rig_id():
-    logger.debug(
-        "Not running from an NP rig: connections to services won't be made. To use BTVTest.1, set env var `USE_TEST_RIG = 1`"
-    )
-
-logger.info(
-    f"Running from {get_comp_id() or utils.HOSTNAME}, {'connected to ' + get_rig_id() if get_rig_id() else 'not connected to a rig'}"
-)
-
-
 class Rig:
     """Access to rig computer hostnames and rig-wide ZooKeeper configs.
     ::
