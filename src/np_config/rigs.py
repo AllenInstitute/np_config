@@ -104,7 +104,7 @@ def get_rig_id() -> str | None:
     "AIBS MPE NP-rig ID, e.g. `'NP.1'` if running on a computer connected to NP.1."
     return (
         os.environ.get("AIBS_RIG_ID", "").upper()
-        or get_comp_ids().get(get_comp_id(), {}).get("rig_id")
+        or get_comp_ids().get(get_comp_id() or "", {}).get("rig_id")
         or (
             f"NP.{utils.rig_idx(get_comp_id())}"
             if get_comp_id() and utils.rig_idx(get_comp_id()) is not None
