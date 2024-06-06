@@ -1,6 +1,6 @@
 [project]
 name = "np-config"
-version = "0.4.32"
+version = "0.4.33"
 description = "Config fetching from file or Zookeeper - with local backup - repackaging code from AIBS mpeconfig."
 authors = [
     { name = "Ben Hardcastle", email = "ben.hardcastle@alleninstitute.org" },
