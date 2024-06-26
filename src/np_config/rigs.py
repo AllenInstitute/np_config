@@ -142,11 +142,14 @@ class Rig:
     >>> Rig().config['Acq']             # doctest: +SKIP
     'W10DT713843'
 
+    Must explicitly ask for non-NP rig info with full ID:
+    >>> Rig('OG.1').sync
+    'W10DT714720'
     """
 
     id: str
     "AIBS MPE rig ID, e.g. `NP.1`"
-    idx: int
+    idx: int | None
     "AIBS MPE NP-rig index, e.g. `1` for NP.1"
 
     _sync: str
@@ -155,14 +158,17 @@ class Rig:
     _acq: str
 
     def __init__(self, idx_or_id: Optional[int | str] = None):
-        idx_or_name = get_rig_idx() if idx_or_id is None else idx_or_id
-        if idx_or_name is None:
+        idx_or_id = get_rig_id() if idx_or_id is None else idx_or_id
+        if idx_or_id is None:
             raise ValueError("Rig index not specified and not running on a rig.")
-        idx = utils.rig_idx(str(idx_or_name))
-        if idx is None:
-            raise ValueError(f"`NP.{idx}` is not a recognized NP-rig")
-        self.idx: int = idx
-        self.id: str = f"NP.{idx}"
+        if isinstance(idx_or_id, int):
+            self.idx: int = idx_or_id
+            self.id = f"NP.{self.idx}"
+        elif isinstance(idx_or_id, str):
+            self.idx = None
+            self.id = idx_or_id
+        else:
+            raise TypeError(f"idx_or_id should be str, not {type(idx_or_id)}")
         for comp in ("sync", "stim", "mon", "acq"):
             setattr(self, f"_{comp}", get_comp_id_to_hostname()[f"{self.id}-{comp.title()}"])
 
