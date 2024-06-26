@@ -20,7 +20,7 @@ Hostnames for each rig computer [Sync, Mon, Acq, Stim]:
 
 Paths for specific apps running on a rig:
 >>> Rig(1).paths['MVR'].as_posix()
-'//W10DTSM118295/c$/ProgramData/AIBS_MPE/mvr/data'
+'//W10DTSM112721/c$/ProgramData/AIBS_MPE/mvr/data'
 
 Config dict for a particular rig, fetched from ZooKeeper /rigs/NP.<idx>:
 >>> Rig(1).config['pretest_mouse']        
