@@ -90,7 +90,15 @@ def get_hostname_to_comp_id() -> dict[str, str]:
 
 def get_rig_id_to_hostnames() -> dict[str, list[str]]:
     "Keys are rig IDs (`NP.1`), values are lists of hostnames (`['W10DT713843', ...]`)."
-    return {k: [get_comp_id_to_hostname()[comp_id] for comp_id in v] for k, v in get_id_to_comp_ids().items()}
+    d = {}
+    for rig_id, comp_ids in get_id_to_comp_ids().items():
+        hostnames = []
+        for comp_id in comp_ids:
+            hostname = get_comp_id_to_hostname().get(comp_id)
+            if hostname:
+                hostnames.append(hostname)
+        d[rig_id] = hostnames
+    return d
 
 # local computer properties ------------------------------------------------------------
 
