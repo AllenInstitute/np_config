@@ -4,8 +4,11 @@
 [metadata]
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
-lock_version = "4.4.1"
-content_hash = "sha256:9ca49f88f12755b21d622a104c86e5bfeb72772eede71f50783ef0b29dc4577c"
+lock_version = "4.5.0"
+content_hash = "sha256:3cf2acb8b9886836a5981dd573415cafa3bd5f6bac2f166dbb9c5fbb7ecf3a32"
+
+[[metadata.targets]]
+requires_python = "~=3.7"
 
 [[package]]
 name = "backports-cached-property"
@@ -13,6 +16,9 @@ version = "1.0.2"
 requires_python = ">=3.6.0"
 summary = "cached_property() - computed once per instance, cached as attribute"
 groups = ["default"]
+dependencies = [
+    "typing>=3.6; python_version < \"3.7\"",
+]
 files = [
     {file = "backports.cached-property-1.0.2.tar.gz", hash = "sha256:9306f9eed6ec55fd156ace6bc1094e2c86fae5fb2bf07b6a9c00745c656e75dd"},
     {file = "backports.cached_property-1.0.2-py3-none-any.whl", hash = "sha256:baeb28e1cd619a3c9ab8941431fe34e8490861fb998c6c4590693d50171db0cc"},
