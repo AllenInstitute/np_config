@@ -47,6 +47,7 @@ import functools
 import logging
 import os
 import pathlib
+import time
 from typing import Any, Hashable, Optional
 
 import requests
@@ -62,14 +63,23 @@ logger = logging.getLogger(__name__)
 
 SERVER = "http://mpe-computers/v2.0"
 
+_mpe_computer_ids_cache: dict[str, Any] = {}
+_mpe_computer_ids_cache_time: float = 0.0
+_MPE_COMPUTER_IDS_TTL = 10.0  # seconds
 
-@functools.lru_cache(maxsize=None)
+
 def get_mpe_computer_ids(key: Literal['comp_ids', 'rig_ids', 'cluster_ids'] | None = None) -> dict[str, Any]:
-    """Get a mapping of computer/rig/cluster IDs and their corresponding information."""
-    all_ids = requests.get(SERVER).json()
+    """Get a mapping of computer/rig/cluster IDs and their corresponding information.
+    
+    Results are cached with a 10-second TTL to handle momentarily incorrect server entries.
+    """
+    global _mpe_computer_ids_cache, _mpe_computer_ids_cache_time
+    if not _mpe_computer_ids_cache or time.monotonic() - _mpe_computer_ids_cache_time > _MPE_COMPUTER_IDS_TTL:
+        _mpe_computer_ids_cache = requests.get(SERVER).json()
+        _mpe_computer_ids_cache_time = time.monotonic()
     if key:
-        return all_ids[key]
-    return all_ids
+        return _mpe_computer_ids_cache[key]
+    return _mpe_computer_ids_cache
 
 get_comp_ids = functools.partial(get_mpe_computer_ids, "comp_ids")
 get_rig_ids = functools.partial(get_mpe_computer_ids, "rig_ids")
